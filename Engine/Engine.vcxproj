@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{407E5EE7-4BA9-452B-A50B-5EFEC754EFE4}</ProjectGuid>
+    <RootNamespace>Engine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\Coleman\Documents\project\Project\openAL\include;C:\Users\Coleman\Documents\project\Project\opengl\glew-2.1.0\include;C:\Users\Coleman\Documents\project\Project\glm-0.9.9.3\glm;C:\Users\Coleman\Documents\project\Project\GLFW\glfw-3.3.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\Users\Coleman\Documents\project\Project\openAL\libs\Win64;C:\Users\Coleman\Documents\project\Project\opengl\glew-2.1.0\lib\Release\x64;C:\Users\Coleman\Documents\project\Project\GLFW\glfw-3.3.bin.WIN64\lib-vc2017;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenAL32.lib;OpenGL32.lib;glew32.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\Coleman\Documents\project\Project\openAL\include;C:\Users\Coleman\Documents\project\Project\opengl\glew-2.1.0\include;C:\Users\Coleman\Documents\project\Project\glm-0.9.9.3\glm;C:\Users\Coleman\Documents\project\Project\GLFW\glfw-3.3.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\Users\Coleman\Documents\project\Project\openAL\libs\Win64;C:\Users\Coleman\Documents\project\Project\opengl\glew-2.1.0\lib\Release\x64;C:\Users\Coleman\Documents\project\Project\GLFW\glfw-3.3.bin.WIN64\lib-vc2017;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenAL32.lib;OpenGL32.lib;glew32.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\Coleman\Documents\project\Project\openAL\include;C:\Users\Coleman\Documents\project\Project\opengl\glew-2.1.0\include;C:\Users\Coleman\Documents\project\Project\glm-0.9.9.3\glm;C:\Users\Coleman\Documents\project\Project\GLFW\glfw-3.3.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>C:\Users\Coleman\Documents\project\Project\openAL\libs\Win64;C:\Users\Coleman\Documents\project\Project\opengl\glew-2.1.0\lib\Release\x64;C:\Users\Coleman\Documents\project\Project\GLFW\glfw-3.3.bin.WIN64\lib-vc2017;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenAL32.lib;OpenGL32.lib;glew32.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\Coleman\Documents\project\Project\openAL\include;C:\Users\Coleman\Documents\project\Project\opengl\glew-2.1.0\include;C:\Users\Coleman\Documents\project\Project\glm-0.9.9.3\glm;C:\Users\Coleman\Documents\project\Project\GLFW\glfw-3.3.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>C:\Users\Coleman\Documents\project\Project\openAL\libs\Win64;C:\Users\Coleman\Documents\project\Project\opengl\glew-2.1.0\lib\Release\x64;C:\Users\Coleman\Documents\project\Project\GLFW\glfw-3.3.bin.WIN64\lib-vc2017;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenAL32.lib;OpenGL32.lib;glew32.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Audio.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Camera.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\CollisionStructure.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Entity.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\GameObject.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Item.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\loadShader.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\main.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Mesh.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Portal.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Projectile.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\RenderTexture.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Settings.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Shader.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\stb_image.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Terrain.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Texture.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Transform.cpp" />
+    <ClCompile Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\UIManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Audio.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Camera.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\CollisionStructure.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Engine.hpp" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Entity.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\GameObject.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Geometry.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Headers.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Item.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\LoadShader.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Mesh.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Noise.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\PerlinNoise.hpp" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Portal.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Projectile.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\RenderTexture.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Settings.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Shader.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\stb_image.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Terrain.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Texture.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\Transform.h" />
+    <ClInclude Include="..\..\..\..\Documents\project\Project\ComputeShader\ComputeShader\UIManager.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
