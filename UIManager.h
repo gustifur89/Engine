@@ -23,6 +23,7 @@ private:
 
 	GLuint shadowsSSBOID;
 	GLuint shadowMatrixLoc;
+	GLuint numShadowSSLoc;
 
 	GLuint lightLoc;
 	GLuint wLSMLoc;
@@ -54,7 +55,7 @@ public:
 	void unlockMouse();
 	bool getMouseLockState();
 	void setDeltaMouse();
-	void setShadowMap(Camera& camera);
+	int setShadowMap(Camera& camera);
 
 	void delay(double timeDelay);
 

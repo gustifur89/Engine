@@ -1,6 +1,8 @@
-#version 330 core
+#version 430 core
 
 in float depth;
+
+//out float depths[4];
 
 //in vec3 frg_color;
 //in vec3 frg_norm;
@@ -27,9 +29,10 @@ void main()
 //	deep = 0.5;//gl_FragDepth;
 	
 	//depth = (gl_Position.z - 0.1) / (100.0 - 0.1);//(gl_Position.z / gl_Position.w);
-	//gl_FragDepth =  gl_FragCoord.z;
+//	gl_FragDepth =  gl_FragCoord.z;// - 0.0001;
 	
 	
-//	gl_FragDepth  = (gl_FragCoord.z / gl_FragCoord.w - 0.1) / (100.0 - 0.1);//(gl_Position.z / gl_Position.w);
-	gl_FragDepth = depth; 
+//	gl_FragDepth  = (gl_FragCoord.z / gl_FragCoord.w - 0.1) / (60.0 - 0.1);//(gl_Position.z / gl_Position.w);
+//	gl_FragDepth = depth; 
+//	depths[0] = gl_FragDepth;
 }

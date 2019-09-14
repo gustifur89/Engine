@@ -18,6 +18,6 @@ void main ()
 	gl_Position = MVP * vec4(pos, 1);
 	frg_color = col;	
 	frg_norm = (NM * vec4(norm, 0)).xyz;
-	frg_pos = (NM * vec4(pos,1)).xyz;
+	frg_pos = vec3(NM * vec4(pos,1));
 	depth = (gl_Position.z - 0.1) / (100.0 - 0.1);//(gl_Position.z / gl_Position.w);
 }

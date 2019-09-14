@@ -68,8 +68,9 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 	glUniform1i(normTexLoc, 2);
 	glUniform1i(shadowTexLoc, 3);
 
-	shadowShader = Shader::loadShader("shadow", "shadow");// , "shadow");
+	shadowShader = Shader::loadShader("shadow", "shadow", "shadow");// , "shadow");
 	shadowMatrixLoc = shadowShader->getUniformLocation("MV");
+	numShadowSSLoc = shadowShader->getUniformLocation("numShadows");
 	lightLoc = shadowShader->getUniformLocation("lvm");
 	//shadowShader->useShader();
 	//GLuint shadowTexLocS = shadowShader->getUniformLocation("shadowMap");
@@ -287,6 +288,7 @@ void UIManager::renderWindow()
 	//bind window
 	//glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
 
+	/*
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderTexture.colTex);
 	glActiveTexture(GL_TEXTURE1);
@@ -297,6 +299,15 @@ void UIManager::renderWindow()
 	glActiveTexture(GL_TEXTURE3);
 	//glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.texID);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture.depthMap);
+
+	*/
+	glBindTextureUnit(0, renderTexture.colTex);
+	glBindTextureUnit(1, renderTexture.posTex);
+	glBindTextureUnit(2, renderTexture.normTex);
+//	glBindTextureUnit(3, shadowTexture.depthMap);
+	glActiveTexture(GL_TEXTURE3);
+	//glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.texID);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.depthMap);// GL_TEXTURE_2D_ARRAY   GL_TEXTURE_2D
 
 	updateWindowShaderUniforms();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -322,7 +333,7 @@ void UIManager::setHDR(float gamma, float exposure)
 	this->exposure = exposure;
 }
 
-void UIManager::setShadowMap(Camera& camera)
+int UIManager::setShadowMap(Camera& camera)
 {
 	//do things with lights
 	//TODO: cull the lights if they are outside the camera's viewing frustum
@@ -374,11 +385,16 @@ void UIManager::setShadowMap(Camera& camera)
 			lightSSBO.push_back((float)lights[i]->radius);
 			lightSSBO.push_back((float)lights[i]->intensity);
 
+			lightSSBO.push_back(0.0f);
+		//	lightSSBO.push_back((float)lights[i]->color.x / 255.0f);
+		//	lightSSBO.push_back((float)lights[i]->color.y / 255.0f);
+		//	lightSSBO.push_back((float)lights[i]->color.z / 255.0f);
+		//	lightSSBO.push_back(0.0f);
 		//	lightSSBO.push_back(0.0f);
 		}
 	}
 
-	glUniform1i(numShadowLoc, numShadows);
+	//std::cout << numShadows << "\n";
 
 	//send the data over the ssbo
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, shadowsSSBOID);
@@ -387,13 +403,14 @@ void UIManager::setShadowMap(Camera& camera)
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
-	shadowShader->loadMatrix(lightLoc, lights[0]->getProjection(0));
+	//shadowShader->loadMatrix(lightLoc, lights[0]->getProjection(0));
 
 
 
 	glActiveTexture(GL_TEXTURE3);
 	//glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.texID);
-	glBindTexture(GL_TEXTURE_2D, shadowTexture.depthMap);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.depthMap);// GL_TEXTURE_2D_ARRAY   GL_TEXTURE_2D
+	return numShadows;
 }
 
 void UIManager::display(Camera& camera)
@@ -419,20 +436,24 @@ void UIManager::display(Camera& camera)
 	//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-	setShadowMap(camera);
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowTexture.depthMapFBO);
 	glViewport(0, 0, 1024, 1024);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
+
 	shadowShader->useShader();
+	
+	int numShadows = setShadowMap(camera);
 
-
-	shadowShader->loadMatrix(lightLoc, lights[0]->getProjection(0));
+	glUniform1i(numShadowSSLoc, numShadows);
+	//shadowShader->loadMatrix(lightLoc, lights[0]->getProjection(0));
 	//shadowShader->loadMatrix(lightLoc, camera.getProjection() * camera.getTransform());
 
-	//glCullFace(GL_FRONT);
+	glCullFace(GL_FRONT);
+	//glDisable(GL_CULL_FACE);
 	stage->renderShadow(windowShader, shadowMatrixLoc);
-	//glCullFace(GL_BACK);
+	//glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -450,8 +471,9 @@ void UIManager::display(Camera& camera)
 
 	//render the window
 	windowShader->useShader();
+	glUniform1i(numShadowLoc, numShadows);
 	//windowShader->loadMatrix(wLSMLoc, camera.getProjection() * camera.getTransform());
-	windowShader->loadMatrix(wLSMLoc, lights[0]->getProjection(0));
+//	windowShader->loadMatrix(wLSMLoc, lights[0]->getProjection(0));
 	renderWindow();
 
 	glfwSwapBuffers(window);

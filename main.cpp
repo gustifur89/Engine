@@ -40,7 +40,7 @@ int main()
 	std::shared_ptr<ColorMesh> mesh0 = ColorMesh::loadFromFile("DefaultCube");
 	std::shared_ptr<ColorMesh> mesh1 = ColorMesh::loadFromFile("DefaultSphere");
 	std::shared_ptr<ColorMesh> cloud = ColorMesh::loadFromFile("SmoothSphere");
-	std::shared_ptr<ColorMesh> mesh2 = ColorMesh::loadFromFile("robot");
+	std::shared_ptr<ColorMesh> robot = ColorMesh::loadFromFile("robot");
 	std::shared_ptr<ColorMesh> mesh3 = ColorMesh::loadFromFile("land");
 	std::shared_ptr<ColorMesh> mesh4 = ColorMesh::loadFromFile("roomVer");
 	std::shared_ptr<ColorMesh> meshCrystal = ColorMesh::loadFromFile("crystal");//crystal
@@ -61,7 +61,7 @@ int main()
 	soundEmmiter0->setAttenuation(0.5);
 	soundEmmiter0->setMinDistance(15.0);
 	soundEmmiter0->setLoop(true);
-	soundEmmiter0->play();
+	//soundEmmiter0->play();
 
 //
 //	sf::SoundBuffer buffer;
@@ -206,6 +206,28 @@ int main()
 	stage->addChild(obj3);
 	//	*/
 
+
+	std::shared_ptr<GameObjectColor> objK(new GameObjectColor);
+	objK->transform.x = 4;
+	objK->transform.y = 8;
+	objK->transform.z = 8;
+	objK->transform.angleY = (rand() % 360);
+	objK->mesh = pillarMesh;
+	objK->shader = shader0;
+	int greyK = rand() % 60 + 60;
+	objK->setFillColor(greyK, greyK, greyK);
+	world1->addChild(objK);
+
+	std::shared_ptr<GameObjectColor> objL(new GameObjectColor);
+	objL->transform.x = 6;
+	objL->transform.y = 8;
+	objL->transform.z = 4;
+	objL->transform.angleY = (rand() % 360);
+	objL->mesh = pillarMesh;
+	objL->shader = shader0;
+	objL->setFillColor(greyK, greyK, greyK);
+	world1->addChild(objL);
+
 	//crystals
 	for (int i = 0; i < 30; i++)
 	{
@@ -294,9 +316,28 @@ int main()
 	std::shared_ptr<Player> player(new Player(0.4, std::shared_ptr<Mesh>(NULL), &UI));
 	player->setJump(10.0);
 	player->setJumpTime(0.5);
+	player->mesh = cloud;
+	player->transform.scaleX = 1.2;
+	player->transform.scaleY = 1.2;
+	player->transform.scaleZ = 1.2;
+	player->shader = shader0;
+	world1->addChild(player);
 	entities.push_back(player);
 	double ballSpeed = 100;
 	land->setTarget(player);
+
+	/*
+	std::shared_ptr<GameObjectColor> objK(new GameObjectColor);
+	objK->transform.x = 8;
+	objK->transform.y = 6;
+	objK->transform.z = 4;
+	objK->transform.angleY = (rand() % 360);
+	objK->mesh = pillarMesh;
+	objK->shader = shader0;
+	int greyK = rand() % 60 + 60;
+	objK->setFillColor(greyK, greyK, greyK);
+	world1->addChild(objK);*/
+
 
 	//HUD
 	std::shared_ptr<Gun> gun(new Gun(0.05, portalGun, &UI));
@@ -316,8 +357,10 @@ int main()
 
 	//LIGHTING
 
-	std::shared_ptr<Light> light0 = Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
+	std::shared_ptr<Light> light0 = Light::createPointLight(glm::vec3(0, 20, 0), 60.0, 50.0, glm::vec3(255,255,255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
 	UI.addLight(light0);
+
+	std::cout << light0->y << "\n";
 
 	glm::vec4 lightAxis(0, 1, 0, 0);
 
@@ -335,6 +378,8 @@ int main()
 	bool updateToggleB = true;
 
 	camera.gamma = 10.0;
+
+	double lightPolarity = 1.0;
 
 	do
 	{
@@ -431,8 +476,9 @@ int main()
 		//lightAxis = rotation * lightAxis;
 
 
-		light0->y += 2.0* UI.deltaTime;
-		if (light0->y >= 20.0) light0->y = 10;
+		light0->x += lightPolarity * 2.0 * UI.deltaTime;
+		if (light0->x >= 20.0) lightPolarity = -1.0;
+		if (light0->x <= -20.0) lightPolarity = 1.0;
 
 	//	light0->x = player->transform.x;
 	//	light0->y = player->transform.y;
