@@ -203,6 +203,7 @@ void UIManager::glSetUp()
 		//glEnable(GL_STENCIL);
 	//	glEnable(GL_BLEND);
 		//glDisable(GL_BLEND);
+	//glEnable(GL_BLEND);
 }
 
 void UIManager::setClearColor(int r, int g, int b)
@@ -462,7 +463,6 @@ void UIManager::display(Camera& camera)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//set up shadows
-
 	stage->render(camera);
 
 	//glClear(GL_DEPTH_BUFFER_BIT);

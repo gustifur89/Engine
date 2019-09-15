@@ -100,7 +100,7 @@ void main()
 	vec3 norm = texture( normTex, UV ).xyz;
 	vec4 pos = texture( posTex, UV );
 	vec4 col = texture( colTex, UV );
-	float ambient = 0.1;
+	float ambient = 0.6;
 
 	float lightVal = ambient;
 
@@ -108,10 +108,10 @@ void main()
 	{
 		 lightVal += lighting(pos.xyz, norm, i);
 	}
-
+	
 	//lightVal += lighting(pos.xyz, norm, 4);
-    color.rgb = col.rgb * lightVal;
-	color.a = 1.0;//col.a;
+    color.rgb = col.rgb * (col.a == 0 ? lightVal : 1.0);
+	color.a = 1.0;
 	
 	//float val = (texture(shadowMap,UV).r);
 	//color.rgb = vec3(val);

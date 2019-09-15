@@ -24,8 +24,8 @@ void main()
 
 	vec3 normInSpace = normalize(NM * vec4(frg_norm, 0.0)).xyz;
 	
-	color = vec4((ColorMatrix * vec4(frg_color, 1.0)).rgb, depth);
-	pos = vec4(frg_pos, depth); //vec4((NM * vec4(frg_pos, 1.0)).xyz, depth);
+	color = vec4((ColorMatrix * vec4(frg_color, 1.0)).rgb, 0.0);
+	pos = vec4(frg_pos, depth); //vec4((NM * vec4(frg_pos, 1.0)).xyz, depth); depth
 	norm = frg_norm;//normInSpace;
 
 //	vec3 normInSpace = normalize(NM * vec4(frg_norm, 0.0)).xyz;

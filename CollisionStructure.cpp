@@ -147,11 +147,11 @@ double OctTree::distanceToTriangle(Collider * collider, std::shared_ptr<Triangle
 			glm::sign(glm::dot(glm::cross(ac, nor), pc)) < 2.0)
 		?
 		glm::min(glm::min(
-			glm::length(ba*glm::clamp(dot(ba, pa) / glm::length(ba), 0.0f, 1.0f) - pa),
-			glm::length(cb*glm::clamp(dot(cb, pb) / glm::length(cb), 0.0f, 1.0f) - pb)),
-			glm::length(ac*glm::clamp(dot(ac, pc) / glm::length(ac), 0.0f, 1.0f) - pc))
+			glm::length(ba*glm::clamp(dot(ba, pa) / glm::length2(ba), 0.0f, 1.0f) - pa),
+			glm::length(cb*glm::clamp(dot(cb, pb) / glm::length2(cb), 0.0f, 1.0f) - pb)),
+			glm::length(ac*glm::clamp(dot(ac, pc) / glm::length2(ac), 0.0f, 1.0f) - pc))
 		:
-		glm::dot(nor, pa)*glm::dot(nor, pa) / glm::length(nor));
+		glm::dot(nor, pa)*glm::dot(nor, pa) / glm::length2(nor));
 }
 
 double OctTree::distanceToPlane(Collider * collider, std::shared_ptr<Triangle> triangle)
@@ -271,17 +271,18 @@ bool OctTree::collideFace(Collider * collider, std::shared_ptr<Triangle> triangl
 		//Better and pretty
 		if (distanceToTriangle(collider, triangle) <= collider->radius)
 			return true;
-
+	//	std::cout << distanceToTriangle(collider, triangle) << " \t: " << collider->radius << "\n";
 		//OLD AND SHITTY. Miss me with it's complicated stuff
-		/*
-		if (fabs(distanceToPlane(collider, triangle)) <= collider->radius)
-		{
-			if (closestPointInSphere(triangle, collider)) return true;
-			if (closestPointInSphere(triangle->p1, triangle->p2, collider)) return true;
-			if (closestPointInSphere(triangle->p2, triangle->p3, collider)) return true;
-			if (closestPointInSphere(triangle->p3, triangle->p1, collider)) return true;
-			return false;
-		}*/
+		///*
+		//if (fabs(distanceToPlane(collider, triangle)) <= collider->radius)
+		//{
+		//	if (closestPointInSphere(triangle, collider)) return true;
+		//	if (closestPointInSphere(triangle->p1, triangle->p2, collider)) return true;
+		//	if (closestPointInSphere(triangle->p2, triangle->p3, collider)) return true;
+		//	if (closestPointInSphere(triangle->p3, triangle->p1, collider)) return true;
+		//	return false;
+		//}
+		//*/
 	}
 	return false;
 }

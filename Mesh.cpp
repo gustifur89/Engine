@@ -673,6 +673,7 @@ std::shared_ptr<ColorMesh> ColorMesh::loadFromFile(std::string fileName)
 	int count_f = 0;
 	bool vertexes = false;
 	bool faces = false;
+	bool alphaChannel = false;
 
 	while (true)
 	{
@@ -680,6 +681,7 @@ std::shared_ptr<ColorMesh> ColorMesh::loadFromFile(std::string fileName)
 		file >> line;
 		if (file.eof())
 			return false;
+		
 		if (line == "element")
 		{
 			std::string type;
@@ -691,6 +693,19 @@ std::shared_ptr<ColorMesh> ColorMesh::loadFromFile(std::string fileName)
 			if (type == "face")
 			{
 				file >> face_number;
+			}
+		}
+		else if (line == "property")
+		{
+			std::string type;
+			file >> type;
+			if (type == "uchar")
+			{
+				file >> type;
+				if (type == "alpha")
+				{
+					alphaChannel = true;
+				}
 			}
 		}
 		else if (line == "end_header")
@@ -721,6 +736,12 @@ std::shared_ptr<ColorMesh> ColorMesh::loadFromFile(std::string fileName)
 				int r, g, b;
 				file >> x >> z >> y >> nx >> nz >> ny;	//y and z switch
 				file >> r >> g >> b;
+
+				if (alphaChannel)
+				{
+					int a;
+					file >> a;
+				}
 
 				mesh->vertexBuffer.push_back(-x);
 				mesh->vertexBuffer.push_back(y);

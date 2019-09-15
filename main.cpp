@@ -42,7 +42,7 @@ int main()
 	std::shared_ptr<ColorMesh> cloud = ColorMesh::loadFromFile("SmoothSphere");
 	std::shared_ptr<ColorMesh> robot = ColorMesh::loadFromFile("robot");
 	std::shared_ptr<ColorMesh> mesh3 = ColorMesh::loadFromFile("land");
-	std::shared_ptr<ColorMesh> mesh4 = ColorMesh::loadFromFile("roomVer");
+	std::shared_ptr<ColorMesh> mesh4 = ColorMesh::loadFromFile("central_pillar");
 	std::shared_ptr<ColorMesh> meshCrystal = ColorMesh::loadFromFile("crystal");//crystal
 	std::shared_ptr<ColorMesh> pillarMesh = ColorMesh::loadFromFile("pillar");
 	std::shared_ptr<ColorMesh> portalGun = ColorMesh::loadFromFile("portalGun");
@@ -136,7 +136,6 @@ int main()
 	
 	std::shared_ptr<GameObjectColor> ground(new GameObjectColor);
 	ground->mesh = mesh4;
-	ground->transform.y = 0;
 	ground->shader = shader0;
 	world1->addChild(ground);
 
@@ -298,14 +297,10 @@ int main()
 	
 	bool shootToggle = true;
 
-//	OctTree tree;
-//	tree.build(world1, 6, 2);
-
-	//16, 16, 100
 	std::shared_ptr<Terrain> land(new Terrain(1024, glm::vec3(15,40,15), 20, 1.0, 2.0, glm::vec3(1.0, 1.0, 1.0), 0.0, 2));
 	land->shader = shader0;
 	world1->addChild(land);	
-	land->addNew(glm::vec2(0, 0));
+	//land->addNew(glm::vec2(0, 0));
 	//land->generateTerrain();
 
 	std::shared_ptr<OctTree> tree(new OctTree());
@@ -360,7 +355,8 @@ int main()
 	std::shared_ptr<Light> light0 = Light::createPointLight(glm::vec3(0, 20, 0), 60.0, 50.0, glm::vec3(255,255,255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
 	UI.addLight(light0);
 
-	std::cout << light0->y << "\n";
+	std::shared_ptr<Light> light1 = Light::createPointLight(glm::vec3(0, 40, 0), 120, 10.0, glm::vec3(255, 255, 255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
+	UI.addLight(light1);
 
 	glm::vec4 lightAxis(0, 1, 0, 0);
 
@@ -370,9 +366,9 @@ int main()
 	glm::mat4 rotation = glm::toMat4(glm::quat(glm::vec3(lightAngleX * TO_RAD, lightAngleY * TO_RAD, lightAngleZ * TO_RAD)));
 	lightAxis = rotation * lightAxis;
 	
-	double shootDelay = 0.001;
+	double shootDelay = 0.1;
 	double shootRefill = 0.0;
-	int numBalls = 5;
+	int numBalls = 3;
 
 	bool updateToggle = false;
 	bool updateToggleB = true;
@@ -380,6 +376,7 @@ int main()
 	camera.gamma = 10.0;
 
 	double lightPolarity = 1.0;
+	double lightPolarity1 = 1.0;
 
 	do
 	{
@@ -460,10 +457,10 @@ int main()
 
 		for (int i = 0; i < Projectile::projectiles.size(); i++)
 		{
-			Projectile::projectiles[i]->move(noCollider);//land
+			Projectile::projectiles[i]->move(tree);//land noCollider tree
 		}
 		
-		player->move(noCollider);//land
+		player->move(tree);//land noCollider tree
 		player->interact(items);
 
 		Audio::configureListener(glm::vec3(player->transform.x, player->transform.y, player->transform.z), player->lookRotation);
@@ -476,9 +473,13 @@ int main()
 		//lightAxis = rotation * lightAxis;
 
 
-		light0->x += lightPolarity * 2.0 * UI.deltaTime;
+		light0->x += lightPolarity * 6.0 * UI.deltaTime;
 		if (light0->x >= 20.0) lightPolarity = -1.0;
 		if (light0->x <= -20.0) lightPolarity = 1.0;
+
+		light1->z += lightPolarity1 * 10.0 * UI.deltaTime;
+		if (light1->z >= 30.0) lightPolarity1 = -1.0;
+		if (light1->z <= -20.0) lightPolarity1 = 1.0;
 
 	//	light0->x = player->transform.x;
 	//	light0->y = player->transform.y;
@@ -491,7 +492,7 @@ int main()
 		else
 			player->updateCamera(camera, 0.9);
 
-		Holdable::move(items, noCollider);//land
+		Holdable::move(items, noCollider);//land noCollider tree
 		Portal::collide(portals, entities);
 		Portal::preRenderPortals(portals, camera);
 		Entity::entityBounds(entities);
