@@ -128,14 +128,14 @@ bool OctTree::boundingBox(Collider *collider, std::shared_ptr<Triangle> triangle
 	double maxZ = fmax(triangle->p1.z, fmax(triangle->p2.z, triangle->p3.z));
 	double minZ = fmin(triangle->p1.z, fmin(triangle->p2.z, triangle->p3.z));
 	double radius = 1.0;
-	if (maxX >= *collider->x - radius && minX <= *collider->x + radius && maxY >= *collider->y - radius && minY <= *collider->y + radius && maxZ >= *collider->z - radius && minZ <= *collider->z + radius)
+	if (maxX >= collider->position->x - radius && minX <= collider->position->x + radius && maxY >= collider->position->y - radius && minY <= collider->position->y + radius && maxZ >= collider->position->z - radius && minZ <= collider->position->z + radius)
 		return true;
 	return false;
 }
 
 double OctTree::distanceToTriangle(Collider * collider, std::shared_ptr<Triangle> triangle)
 {
-	glm::vec3 p(*collider->x, *collider->y, *collider->z);
+	glm::vec3 p = *collider->position;
 	glm::vec3 ba = triangle->p2 - triangle->p1; glm::vec3 pa = p - triangle->p1;
 	glm::vec3 cb = triangle->p3 - triangle->p2; glm::vec3 pb = p - triangle->p2;
 	glm::vec3 ac = triangle->p1 - triangle->p3; glm::vec3 pc = p - triangle->p3;
@@ -157,7 +157,7 @@ double OctTree::distanceToTriangle(Collider * collider, std::shared_ptr<Triangle
 double OctTree::distanceToPlane(Collider * collider, std::shared_ptr<Triangle> triangle)
 {
 	double d = (triangle->normal.x * triangle->pos.x + triangle->normal.y * triangle->pos.y + triangle->normal.z * triangle->pos.z);
-	return (triangle->normal.x * *collider->x + triangle->normal.y * *collider->y + triangle->normal.z * *collider->z - d);
+	return (triangle->normal.x * collider->position->x + triangle->normal.y * collider->position->y + triangle->normal.z * collider->position->z - d);
 }
 
 void OctTree::solveSystem(double a, double b, double c, double d, double e, double f, double *x, double *y)
@@ -215,13 +215,13 @@ bool OctTree::projectionCollisions(float collX, float collY, float radius, float
 
 bool OctTree::pointInSphere(glm::vec3 point, Collider * collider)
 {
-	double d = sqrt((point.x - *collider->x)*(point.x - *collider->x) + (point.y - *collider->y)*(point.y - *collider->y) + (point.z - *collider->z) *(point.z - *collider->z));
+	double d = sqrt((point.x - collider->position->x)*(point.x - collider->position->x) + (point.y - collider->position->y)*(point.y - collider->position->y) + (point.z - collider->position->z) *(point.z - collider->position->z));
 	return d <= collider->radius;
 }
 
 bool OctTree::closestPointInSphere(glm::vec3 A, glm::vec3 B, Collider * collider)
 {
-	glm::vec3 D = glm::vec3(*collider->x, *collider->y, *collider->z);
+	glm::vec3 D = *collider->position;
 	glm::vec3 AB = B - A;
 	glm::vec3 AD = D - A;
 	double t = glm::dot(AD, AB) / glm::dot(AB, AB);
@@ -240,7 +240,7 @@ bool OctTree::closestPointInSphere(std::shared_ptr<Triangle> triangle, Collider 
 	glm::vec3 A = triangle->p1;
 	glm::vec3 B = triangle->p2;
 	glm::vec3 C = triangle->p3;
-	glm::vec3 D = glm::vec3(*collider->x, *collider->y, *collider->z);
+	glm::vec3 D = *collider->position;
 
 	glm::vec3 AB = B - A;
 	glm::vec3 AC = C - A;
@@ -338,7 +338,7 @@ std::vector<std::shared_ptr<Triangle>> OctTree::collide(Collider * collider)
 	std::vector<std::shared_ptr<Triangle>> triangles;
 	while (ptr != nullptr && ptr->leaf == false)
 	{
-		glm::vec3 point = glm::vec3(*collider->x, *collider->y, *collider->z);
+		glm::vec3 point = *collider->position;
 		ptr = ptr->children[ptr->getRegion(point)];
 	}
 	

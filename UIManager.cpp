@@ -52,6 +52,8 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 	shadowTexLoc = windowShader->getUniformLocation("shadowMap");
 	numShadowLoc = windowShader->getUniformLocation("numShadows");
 	wLSMLoc = windowShader->getUniformLocation("lsm");
+	gLDirLoc = windowShader->getUniformLocation("globalLightDir");
+	gLIntenLoc = windowShader->getUniformLocation("globalLightInten");
 	
 //std::cout << colTexLoc << "\n";
 //std::cout << posTexLoc << "\n";
@@ -316,6 +318,8 @@ void UIManager::renderWindow()
 	//glViewport(0, 0, width, height);
 	//render the window quads and push the texture
 	windowShader->useShader();
+	windowShader->loadVector(gLDirLoc, Light::globalLightDirection);
+	windowShader->loadFloat(gLIntenLoc, Light::globalLightIntensity);
 	glBindVertexArray(windowVAO);
 	glEnableVertexAttribArray(0);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -359,9 +363,9 @@ int UIManager::setShadowMap(Camera& camera)
 		{
 			numShadows++;
 			//lightSSBO
-			lightSSBO.push_back((float)lights[i]->x);
-			lightSSBO.push_back((float)lights[i]->y);
-			lightSSBO.push_back((float)lights[i]->z);
+			lightSSBO.push_back((float)lights[i]->position.x);
+			lightSSBO.push_back((float)lights[i]->position.y);
+			lightSSBO.push_back((float)lights[i]->position.z);
 			lightSSBO.push_back(0.0f);
 			glm::mat4 mat = lights[i]->getProjection(j);
 
@@ -452,7 +456,7 @@ void UIManager::display(Camera& camera)
 
 	glCullFace(GL_FRONT);
 	//glDisable(GL_CULL_FACE);
-	stage->renderShadow(windowShader, shadowMatrixLoc);
+	stage->renderShadow(lights, windowShader, shadowMatrixLoc);
 	//glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
@@ -478,6 +482,9 @@ void UIManager::display(Camera& camera)
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
+
+	//std::cout << (1.0 / deltaTime) << "\n";
+
 }
 
 UIManager::~UIManager()

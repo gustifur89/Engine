@@ -38,8 +38,8 @@ void Terrain::makeChunk(double x, double z)
 std::shared_ptr<Chunk> Terrain::generateChunk(glm::vec2 pos, std::pair<double, double> point)
 {
 	std::shared_ptr<Chunk> chunk(new Chunk());
-	chunk->transform.x = pos.x * chunkSize.x * scale.x;
-	chunk->transform.z = pos.y * chunkSize.z * scale.z;
+	chunk->transform.position.x = pos.x * chunkSize.x * scale.x;
+	chunk->transform.position.z = pos.y * chunkSize.z * scale.z;
 	chunk->shader = this->shader;
 	chunk->key = point;
 
@@ -95,11 +95,11 @@ std::shared_ptr<Chunk> Terrain::generateChunk(glm::vec2 pos, std::pair<double, d
 					double z_ = ((double)z) / zVerts;
 
 					std::shared_ptr<GameObjectColor> tree(new GameObjectColor);
-					tree->transform.x = scale.x * ((pos.x + x_) * chunkSize.x + Gen::random() * meshDensity);
-					tree->transform.y = scale.y * (y_ * chunkSize.y + Gen::random() * meshDensity);
-					tree->transform.z = scale.z * ((pos.y + z_) * chunkSize.z + Gen::random() * meshDensity);
-					tree->transform.angleY = (rand() % 360);
-					tree->transform.scaleY = Gen::random() * 2.0 + 0.5;
+					tree->transform.position.x = scale.x * ((pos.x + x_) * chunkSize.x + Gen::random() * meshDensity);
+					tree->transform.position.y = scale.y * (y_ * chunkSize.y + Gen::random() * meshDensity);
+					tree->transform.position.z = scale.z * ((pos.y + z_) * chunkSize.z + Gen::random() * meshDensity);
+					tree->transform.rotation.y = (rand() % 360);
+					tree->transform.scale.y = Gen::random() * 2.0 + 0.5;
 					tree->collidable = false;
 					tree->mesh = treeMesh;
 					tree->shader = this->shader;
@@ -246,7 +246,7 @@ void Terrain::cullOld(glm::vec2 center)
 
 void Terrain::chunkManagement()
 {
-	glm::vec2 pos = glm::vec2(chunkTarget->transform.x / scale.x, chunkTarget->transform.z / scale.z);
+	glm::vec2 pos = glm::vec2(chunkTarget->transform.position.x / scale.x, chunkTarget->transform.position.z / scale.z);
 	pos.x /= chunkSize.x;
 	pos.y /= chunkSize.z;
 	pos = floor(pos);
@@ -265,7 +265,7 @@ std::vector<std::shared_ptr<Triangle>> Terrain::collide(Collider * collider)
 	//get the proper collision chunk using the velocity
 	glm::vec3 nVel = glm::normalize(*collider->vel);
 	nVel *= collider->radius;
-	glm::vec2 pos = glm::vec2((*collider->x)/ scale.x, (*collider->z) / scale.z);
+	glm::vec2 pos = glm::vec2((collider->position->x)/ scale.x, (collider->position->z) / scale.z);
 	pos.x /= chunkSize.x;
 	pos.y /= chunkSize.z;
 	pos = floor(pos);

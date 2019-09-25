@@ -14,6 +14,8 @@ private:
 	GLuint clearColorLoc;
 	GLuint gammaLoc;
 	GLuint exposureLoc;
+	GLuint gLDirLoc;
+	GLuint gLIntenLoc;
 
 	GLuint colTexLoc;
 	GLuint posTexLoc;

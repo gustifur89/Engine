@@ -7,9 +7,8 @@ class Collider
 {
 public:
 	glm::vec3 * vel;
-	double *x, *y, *z;
+	glm::vec3 * position;
 	float radius;
-
 };
 
 

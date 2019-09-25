@@ -5,9 +5,7 @@
 Entity::Entity(double radius, std::shared_ptr<Mesh> mesh, UIManager * UI, bool slidable)
 {
 	collider.radius = radius;
-	collider.x = &this->transform.x;
-	collider.y = &this->transform.y;
-	collider.z = &this->transform.z;
+	collider.position = &this->transform.position;
 	collider.vel = &this->vel;
 	this->mesh = mesh;
 	lookRotation = glm::vec3(0.0);
@@ -71,9 +69,7 @@ void Entity::move(std::shared_ptr<CollisionStructure> collisionStructure)
 
 	for (int i = 0; i < steps; i++)
 	{
-		transform.x += fracMove.x;
-		transform.y += fracMove.y;
-		transform.z += fracMove.z;
+		transform.position += fracMove;
 		if (collisionStructure == nullptr) continue;
 		std::vector<std::shared_ptr<Triangle>> faces = collisionStructure->collide(&collider);
 		faces = getColliableFaces(faces);
@@ -81,33 +77,25 @@ void Entity::move(std::shared_ptr<CollisionStructure> collisionStructure)
 		if (faces.size() > 0)
 		{
 			colliding = true;
-			transform.x -= fracMove.x;
-			transform.y -= fracMove.y;
-			transform.z -= fracMove.z;
+			transform.position -= fracMove;
 			if (slidable)
 			{
 				std::shared_ptr<Triangle> face = getFace(faces);
 				if (face->normal.y > 0.8) floorColliding = true;
 				if (face->normal.y < -0.8) roofColliding = true;
 				//move back a little
-				transform.x += face->normal.x * Settings::epsilon;
-				transform.y += face->normal.y * Settings::epsilon;
-				transform.z += face->normal.z * Settings::epsilon;
+				transform.position += (float) Settings::epsilon * face->normal;
 
 				//Get perpedicular
 				glm::vec3 moveRest = ((float)steps - i) * fracMove;
 				glm::vec3 perp = moveRest - (glm::dot(moveRest, face->normal) / glm::length(face->normal)) * face->normal;
 
-				transform.x += perp.x;
-				transform.y += perp.y;
-				transform.z += perp.z;
+				transform.position += perp;
 				faces = collisionStructure->collide(&collider);
 				faces = getColliableFaces(faces);
 				if (faces.size() > 0)
 				{
-					transform.x -= perp.x;
-					transform.y -= perp.y;
-					transform.z -= perp.z;
+					transform.position -= perp;
 				}
 
 			}
@@ -119,12 +107,9 @@ void Entity::move(std::shared_ptr<CollisionStructure> collisionStructure)
 
 void Entity::updateCamera(Camera & camera, double upPercent)
 {
-	camera.angleX = lookRotation.x;
-	camera.angleY = lookRotation.y;
-	camera.angleZ = lookRotation.z;
-	camera.x = transform.x;
-	camera.y = transform.y + collider.radius * upPercent;
-	camera.z = transform.z;
+	camera.rotation = lookRotation;
+	camera.position = transform.position;
+	camera.position.y += collider.radius * upPercent;
 }
 
 void Entity::entityBounds(std::vector<std::shared_ptr<Entity>> entities)
@@ -173,19 +158,18 @@ void Holdable::move(std::shared_ptr<CollisionStructure> collisionStructure)
 
 void Holdable::setTransform(Transform transform)
 {
-	glm::vec3 angles = glm::vec3(transform.angleX, transform.angleY, transform.angleZ);
+	glm::vec3 Z = Transform::getTransformedZ(transform.rotation);
+	glm::vec3 X = Transform::getTransformedX(transform.rotation);
+	glm::vec3 Y = Transform::getTransformedY(transform.rotation);
 
-	glm::vec3 Z = Transform::getTransformedZ(angles);
-	glm::vec3 X = Transform::getTransformedX(angles);
-	glm::vec3 Y = Transform::getTransformedY(angles);
 
-	this->transform.x = transform.x + X.x * relative.x + Y.x * relative.y + Z.x * relative.z;
-	this->transform.y = transform.y + X.y * relative.x + Y.y * relative.y + Z.y * relative.z;
-	this->transform.z = transform.z + X.z * relative.x + Y.z * relative.y + Z.z * relative.z;
+//	glm::mat3 POS = glm::mat3(X,Y,Z);
 
-	this->transform.angleX = transform.angleX + relative.angleX;
-	this->transform.angleY = transform.angleY + relative.angleY;
-	this->transform.angleZ = transform.angleZ + relative.angleZ;
+	this->transform.position.x = transform.position.x + X.x * relative.position.x + Y.x * relative.position.y + Z.x * relative.position.z;
+	this->transform.position.y = transform.position.y + X.y * relative.position.x + Y.y * relative.position.y + Z.y * relative.position.z;
+	this->transform.position.z = transform.position.z + X.z * relative.position.x + Y.z * relative.position.y + Z.z * relative.position.z;
+
+	this->transform.rotation += relative.rotation;
 }
 
 void Holdable::move(std::vector<std::shared_ptr<Holdable>> items, std::shared_ptr<CollisionStructure> collisionStructure)
@@ -222,8 +206,8 @@ void Player::interact(std::shared_ptr<Holdable> item)
 	bool q = UI->isKeyPressed(GLFW_KEY_Q);
 	if (e || q)
 	{
-		glm::vec3 pPos = glm::vec3(*collider.x, *collider.y, *collider.z);
-		glm::vec3 iPos = glm::vec3(*item->collider.x, *item->collider.y, *item->collider.z);
+		glm::vec3 pPos = *collider.position;
+		glm::vec3 iPos = *item->collider.position;
 		if (glm::length(pPos - iPos) <= collider.radius + item->collider.radius)
 		{
 			if (e)
@@ -325,9 +309,8 @@ void Player::move(std::shared_ptr<CollisionStructure> collisionStructure)
 
 	if (noClip)
 	{
-		vel.x = directionForward.x * forwardSpeed + directionStrafe.x * strafeSpeed + directionVertical.x * verticalSpeed;
-		vel.y = directionForward.y * forwardSpeed + directionStrafe.y * strafeSpeed + directionVertical.y * verticalSpeed;
-		vel.z = directionForward.z * forwardSpeed + directionStrafe.z * strafeSpeed + directionVertical.z * verticalSpeed;
+		vel = (float) forwardSpeed * directionForward + (float) strafeSpeed * directionStrafe + (float) verticalSpeed * directionVertical;
+
 	}
 	else
 	{
@@ -374,9 +357,7 @@ void Player::move(std::shared_ptr<CollisionStructure> collisionStructure)
 
 	if (UI->isKeyPressed(GLFW_KEY_3))
 	{
-		transform.x = 10;
-		transform.y = 10;
-		transform.z = 10;
+		transform.position = glm::vec3(10.0);
 	}
 
 	Entity::move(collisionStructure);

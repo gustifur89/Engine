@@ -17,6 +17,7 @@ public:
 		this->p3 = p3;
 		pos = glm::vec3((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3, (p1.z + p2.z + p3.z) / 3);
 		this->normal = calculateNormal(p1, p2, p3);
+		d = -glm::dot(normal, pos);
 	}
 
 	/** /
@@ -37,6 +38,31 @@ public:
 		pos += offSet;
 		return *this;
 	}
+	
+	Triangle applyMatrix(glm::mat4 matrix)
+	{
+		glm::vec4 p1_ = glm::vec4(p1, 1);
+		glm::vec4 p2_ = glm::vec4(p2, 1);
+		glm::vec4 p3_ = glm::vec4(p3, 1);
+		p1_ = matrix * p1_;
+		p2_ = matrix * p2_;
+		p3_ = matrix * p3_;
+		Triangle nTri(p1_ / p1_.w, p2_ / p2_.w, p3_ / p3_.w);
+		return nTri;
+	}
+
+	double getD()
+	{
+		//pos.x * normal.x + pos.y * normal.y + pos.z * normal.z + d = 0
+
+
+		return -glm::dot(normal, pos);
+	}
+
+	float distanceFromPlan(glm::vec3 p)
+	{
+		return glm::dot(normal, p) + d;
+	}
 
 	//parameters
 	glm::vec3 p1;
@@ -44,6 +70,7 @@ public:
 	glm::vec3 p3;
 	glm::vec3 pos;
 	glm::vec3 normal;
+	float d;
 };
 
 class Bounds
@@ -297,6 +324,41 @@ public:
 	//	return triangles;
 	}
 
+	Bounds applyMatrix(glm::mat4 matrix)
+	{
+		glm::vec4 vLLL = glm::vec4(low.x,	low.y,	low.z,	1);
+		glm::vec4 vLLH = glm::vec4(low.x,	low.y,	high.z,	1);
+		glm::vec4 vLHL = glm::vec4(low.x, high.y,	low.z,	1);
+		glm::vec4 vLHH = glm::vec4(low.x, high.y, high.z,	1);
+		glm::vec4 vHLL = glm::vec4(high.x,	low.y,	low.z,	1);
+		glm::vec4 vHLH = glm::vec4(high.x,	low.y, high.z,	1);
+		glm::vec4 vHHL = glm::vec4(high.x, high.y,	low.z,	1);
+		glm::vec4 vHHH = glm::vec4(high.x, high.y, high.z,	1);
+
+
+		vLLL = matrix * vLLL;
+		vLLH = matrix * vLLH;
+		vLHL = matrix * vLHL;
+		vLHH = matrix * vLHH;
+		vHLL = matrix * vHLL;
+		vHLH = matrix * vHLH;
+		vHHL = matrix * vHHL;
+		vHHH = matrix * vHHH;
+
+		vLLL /= vLLL.w;
+		vLLH /= vLLH.w;
+		vLHL /= vLHL.w;
+		vLHH /= vLHH.w;
+		vHLL /= vHLL.w;
+		vHLH /= vHLH.w;
+		vHHL /= vHHL.w;
+		vHHH /= vHHH.w;	
+		
+		glm::vec4 low_ = glm::min(glm::min(glm::min(glm::min(glm::min(glm::min(glm::min(vLLL, vLLH), vLHL), vLHH), vHLL), vHLH), vHHL), vHHH);
+		glm::vec4 high_ = glm::max(glm::max(glm::max(glm::max(glm::max(glm::max(glm::max(vLLL, vLLH), vLHL), vLHH), vHLL), vHLH), vHHL), vHHH);
+		return Bounds(low_, high_);
+	}
+
 	static Bounds boundsFromTriangles(std::vector<std::shared_ptr<Triangle>> triangles)
 	{
 		Bounds bounds;
@@ -398,3 +460,223 @@ public:
 
 };
 
+class Frustum
+{
+public:
+	Frustum()
+	{
+	}
+
+	Frustum(glm::mat4 frustumProjection)
+	{
+		frustum = frustumProjection;
+		plane.resize(6);	
+		points.resize(8);
+		glm::inverse(frustumProjection);
+		//frustum into view space
+		//we get the vertexes of a regular cube, and then project it into the frustm
+		glm::vec3 vLLL = glm::vec3(-1, -1, -1);
+		glm::vec3 vLLH = glm::vec3(-1, -1,	1);
+		glm::vec3 vLHL = glm::vec3(-1,	1, -1);
+		glm::vec3 vLHH = glm::vec3(-1,	1,	1);
+		glm::vec3 vHLL = glm::vec3( 1, -1, -1);
+		glm::vec3 vHLH = glm::vec3( 1, -1,	1);
+		glm::vec3 vHHL = glm::vec3( 1,	1, -1);
+		glm::vec3 vHHH = glm::vec3( 1,	1,	1);
+		
+	//	Triangle LY(vLLL, vLLH, vHLL);
+	//	LY = LY.applyMatrix(frustum);
+	
+	//	Triangle HY(vLHL, vHHL, vLHH);
+	//	HY = HY.applyMatrix(frustum);
+	
+		Triangle LZ(vLLL, vLHL, vHLL);
+		LZ = LZ.applyMatrix(frustum);
+	
+		plane[0] = glm::vec4(LZ.normal, LZ.d);
+	//	plane[1] = glm::vec4(HY.normal, HY.getD());
+	
+		glm::vec4 vLLL_ = frustum * glm::vec4(vLLL, 1);
+		glm::vec4 vLLH_ = frustum * glm::vec4(vLLH, 1);
+		glm::vec4 vLHL_ = frustum * glm::vec4(vLHL, 1);
+		glm::vec4 vLHH_ = frustum * glm::vec4(vLHH, 1);
+		glm::vec4 vHLL_ = frustum * glm::vec4(vHLL, 1);
+		glm::vec4 vHLH_ = frustum * glm::vec4(vHLH, 1);
+		glm::vec4 vHHL_ = frustum * glm::vec4(vHHL, 1);
+		glm::vec4 vHHH_ = frustum * glm::vec4(vHHH, 1);
+	
+		vLLL = glm::vec3(vLLL_) / vLLL_.w;
+		vLLH = glm::vec3(vLLH_) / vLLH_.w;
+		vLHL = glm::vec3(vLHL_) / vLHL_.w;
+		vLHH = glm::vec3(vLHH_) / vLHH_.w;
+		vHLL = glm::vec3(vHLL_) / vHLL_.w;
+		vHLH = glm::vec3(vHLH_) / vHLH_.w;
+		vHHL = glm::vec3(vHHL_) / vHHL_.w;
+		vHHH = glm::vec3(vHHH_) / vHHH_.w;
+
+
+		points[0] = vLLL;
+		points[1] = vLLH;
+		points[2] = vLHL;
+		points[3] = vLHH;
+		points[4] = vHLL;
+		points[5] = vHLH;
+		points[6] = vHHL;
+		points[7] = vHHH;
+
+		glm::vec3 tempNorm;
+
+
+		//tempNorm = glm::normalize(glm::cross(vLLL - vHLL, vHHL - vHLL));
+		//plane[0] = glm::vec4(tempNorm, );
+
+
+		//front
+	//	tempNorm = glm::normalize(glm::cross(vHHH - vLHH, vLLH - vLHH));
+	//	plane[0] = glm::vec4(tempNorm, glm::dot(tempNorm, vLHH));
+	//	
+	//	tempNorm = glm::normalize(glm::cross(vLHH - vLLH, vLLL - vLLH));
+	//	plane[1] = glm::vec4(tempNorm, glm::dot(tempNorm, vLLH));
+	//	
+	//	tempNorm = glm::normalize(glm::cross(vHHL - vHLL, vLLL - vHLL));
+	//	plane[2] = glm::vec4(tempNorm, glm::dot(tempNorm, vHLL));
+	//
+	//	tempNorm = glm::normalize(glm::cross(vHLH - vHHL, vHHH - vHHL));
+	//	plane[3] = glm::vec4(tempNorm, glm::dot(tempNorm, vHHL));
+	//
+	//	tempNorm = glm::normalize(glm::cross(vLHH - vHHH, vHHL - vHHH));
+	//	plane[0] = glm::vec4(tempNorm, glm::dot(tempNorm, vHHH));
+	//
+	//	tempNorm = glm::normalize(glm::cross(vLLH - vLLL, vHLL - vLLL));
+	//	plane[5] = glm::vec4(tempNorm, glm::dot(tempNorm, vLLL));
+	}
+
+	float distanceFromPlane(glm::vec4 face, glm::vec4 p)
+	{
+		return glm::dot(face, p);// +face.w;
+	}
+
+	bool viewSpaceBoxInFrustum(glm::mat4 MVMatrix, Bounds bounds)
+	{
+		
+	//	int i = 0;
+	//	int out = 0;
+	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.low.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
+	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.low.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
+	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.high.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
+	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.high.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
+	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.low.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
+	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.low.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
+	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.high.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
+	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.high.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
+	//	if (out == 8) return false;
+
+
+
+		bounds = bounds.applyMatrix(frustum * MVMatrix);
+	//	std::cout << "low : " << (bounds.low.z) << "\thigh : " << (bounds.high.z) << "\n";
+		if (bounds.low.x <= 1 && bounds.low.y <= 1 && bounds.low.z <= 1 && bounds.high.x >= -1 && bounds.high.y >= -1 && bounds.high.z >= -1)
+		//if (bounds.low.z <= 1 && bounds.high.z >= -1)
+		{
+			return true;
+		}
+		return false;
+
+
+		//return true;
+
+		/*
+		int frustumPlanes = 1;
+		int pointsNum = 8;
+		bool do_second = false;
+
+		// check box outside/inside of frustum
+		for (int i = 0; i < frustumPlanes; i++)
+		{
+			int out = 0;
+			out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.low.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
+			out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.low.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
+			out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.high.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
+			out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.high.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
+			out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.low.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
+			out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.low.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
+			out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.high.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
+			out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.high.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
+			if (out == 8) return false;
+		}
+
+		// check frustum outside/inside box
+		if (do_second)
+		{
+			int out;
+			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].x > bounds.high.x) ? 1 : 0); if (out == 8) return false;
+			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].x < bounds.low.x) ? 1 : 0); if (out == 8) return false;
+			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].y > bounds.high.y) ? 1 : 0); if (out == 8) return false;
+			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].y < bounds.low.y) ? 1 : 0); if (out == 8) return false;
+			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].z > bounds.high.z) ? 1 : 0); if (out == 8) return false;
+			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].z < bounds.low.z) ? 1 : 0); if (out == 8) return false;
+		}
+		
+		*/
+		//return true;
+
+
+
+		/*
+		glm::vec3 mins = bounds.low;
+		glm::vec3 maxs = bounds.high;
+		glm::vec3 vmin, vmax;
+		glm::vec3 normal;
+
+		for (int i = 0; i < 1; ++i) {//6
+			// X axis 
+			normal = glm::vec3(plane[i]);
+			if (normal.x > 0) {
+				vmin.x = mins.x;
+				vmax.x = maxs.x;
+			}
+			else {
+				vmin.x = maxs.x;
+				vmax.x = mins.x;
+			}
+			// Y axis 
+			if (normal.y > 0) {
+				vmin.y = mins.y;
+				vmax.y = maxs.y;
+			}
+			else {
+				vmin.y = maxs.y;
+				vmax.y = mins.y;
+			}
+			// Z axis 
+			if (normal.z > 0) {
+				vmin.z = mins.z;
+				vmax.z = maxs.z;
+			}
+			else {
+				vmin.z = maxs.z;
+				vmax.z = mins.z;
+			}
+			if (glm::dot(normal, vmin) + plane[i].w > 0)
+				return false;
+			//if (Vector::DotProduct(planes[i].normal, vmax) + planes[i].d >= 0)
+			//	ret = INTERSECT;
+		}
+		return true;
+		*/
+	}
+
+	bool viewSpaceSphereInFrustum(glm::vec3 center, float radius)
+	{
+		for (int i = 0; i < 6; ++i) {
+			if (glm::dot(glm::vec3(plane[i]), center) + plane[i].w - radius > 0)
+  				return false;
+		}
+		return true;
+	}
+
+	std::vector<glm::vec4> plane;
+	std::vector<glm::vec3> points;
+	glm::mat4 frustum;
+
+};

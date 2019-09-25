@@ -17,11 +17,14 @@ public:
 	void render(Camera& camera);
 	virtual void renderFunc(Camera& camera);
 
-	void renderShadow(std::shared_ptr<Shader> shader, int location);
+	void renderShadow(std::vector<std::shared_ptr<Light>> lights, std::shared_ptr<Shader> shader, int location);
 	virtual void renderShadowFunc(std::shared_ptr<Shader> shader, int location);
+
+	Bounds getWorldSpaceBounds();
 
 	std::vector<std::shared_ptr<GameObject>> children;
 	bool visible;
+	bool persistentVisible;
 	bool collidable;
 	Transform transform;
 	std::shared_ptr<Mesh> mesh;

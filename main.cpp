@@ -55,9 +55,7 @@ int main()
 
 	std::shared_ptr<Sound> sound0 = Sound::loadFromFile("buzz");
 	std::shared_ptr<SoundEmitter> soundEmmiter0 = std::shared_ptr<SoundEmitter>(new SoundEmitter(sound0));
-	soundEmmiter0->transform.x = 0;
-	soundEmmiter0->transform.y = 0;
-	soundEmmiter0->transform.z = 0;
+	soundEmmiter0->transform.position = glm::vec3(0.0);
 	soundEmmiter0->setAttenuation(0.5);
 	soundEmmiter0->setMinDistance(15.0);
 	soundEmmiter0->setLoop(true);
@@ -75,13 +73,13 @@ int main()
 	
 //	sf::Listener::setPosition(0,0,0);
 
-	/*
+	///*
 	std::shared_ptr<GameObjectTexture> texObj(new GameObjectTexture());
 	texObj->mesh = texCube;
 	texObj->shader = texShader;
 	texObj->texture = texture0;
 	world1->addChild(texObj);
-	*/
+	//*/
 
 	/*
 	std::shared_ptr<Portal> portal1(new Portal);
@@ -134,6 +132,31 @@ int main()
 	//Portal::linkPortals(portal3, portal4);
 	//Portal::linkPortals(portal1, portal2);
 	
+	/*
+	glm::mat4 frustum = glm::perspective(
+		glm::radians(90.f),
+		1.0f,
+		0.1f,
+		10.0f
+	);
+
+	std::shared_ptr<ColorMesh> frustumMesh = ColorMesh::applyMatrixToMesh(mesh0, glm::inverse(frustum));
+	std::shared_ptr<GameObjectColor> frustumObj(new GameObjectColor);
+	frustumObj->mesh = frustumMesh;
+	frustumObj->shader = shader0;
+	world1->addChild(frustumObj);
+
+	std::shared_ptr<GameObjectColor> cubeObj(new GameObjectColor);
+	cubeObj->transform.position.x = 1.2;
+	cubeObj->transform.position.z = -8.2;
+	std::shared_ptr<ColorMesh> projMesh0 = ColorMesh::applyMatrixToMesh(mesh0, frustum * cubeObj->transform.getTransform());
+	cubeObj->shader = shader0;
+	cubeObj->mesh = projMesh0;
+	world1->addChild(cubeObj);
+	*/
+
+
+
 	std::shared_ptr<GameObjectColor> ground(new GameObjectColor);
 	ground->mesh = mesh4;
 	ground->shader = shader0;
@@ -206,42 +229,16 @@ int main()
 	//	*/
 
 
-	std::shared_ptr<GameObjectColor> objK(new GameObjectColor);
-	objK->transform.x = 4;
-	objK->transform.y = 8;
-	objK->transform.z = 8;
-	objK->transform.angleY = (rand() % 360);
-	objK->mesh = pillarMesh;
-	objK->shader = shader0;
-	int greyK = rand() % 60 + 60;
-	objK->setFillColor(greyK, greyK, greyK);
-	world1->addChild(objK);
-
-	std::shared_ptr<GameObjectColor> objL(new GameObjectColor);
-	objL->transform.x = 6;
-	objL->transform.y = 8;
-	objL->transform.z = 4;
-	objL->transform.angleY = (rand() % 360);
-	objL->mesh = pillarMesh;
-	objL->shader = shader0;
-	objL->setFillColor(greyK, greyK, greyK);
-	world1->addChild(objL);
-
 	//crystals
 	for (int i = 0; i < 30; i++)
 	{
 		std::shared_ptr<GameObjectColor> obj(new GameObjectColor);
-		obj->transform.x = rand() % 120 - 60;
-		obj->transform.y = rand() % 60 - 30;// +20;
-		obj->transform.z = rand() % 120 - 60;
-		obj->transform.angleY = (rand() % 360);
+		obj->transform.position = glm::vec3(rand() % 120 - 60, rand() % 60 - 30, rand() % 120 - 60);
+		obj->transform.rotation.y = (rand() % 360);
 		double scale = ((rand() % 1000) / 1000.0) * 1.0 + 0.6;
-		obj->transform.scaleY = ((rand() % 1000) / 1000.0) * 1.0 + 1.0;
+		obj->transform.scale.y= ((rand() % 1000) / 1000.0) * 1.0 + 1.0;
 		
-		obj->transform.scaleX *= scale;
-		obj->transform.scaleY *= scale;
-		obj->transform.scaleZ *= scale;
-		
+		obj->transform.scale *= scale;
 		obj->mesh = pillarMesh;
 		obj->shader = shader0;
 
@@ -259,7 +256,7 @@ int main()
 	}
 
 	//clouds
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		int cloudNum = rand() % 3 + 3;
 
@@ -272,16 +269,12 @@ int main()
 		for (int i = 0; i < cloudNum; i++)
 		{
 			std::shared_ptr<GameObjectColor> obj(new GameObjectColor);
-			obj->transform.x = x + rand() % 4 - 2;
-			obj->transform.y = y + rand() % 2 - 1;
-			obj->transform.z = z + rand() % 4 - 2;
-			obj->transform.angleY = angle;
+			obj->transform.position = glm::vec3(x + rand() % 4 - 2, y + rand() % 2 - 1, z + rand() % 4 - 2);
+			obj->transform.rotation.y = angle;
 
 			double scale = ((rand() % 1000) / 1000.0) * 1.6 + 1.0;
 
-			obj->transform.scaleX = scale;// ((rand() % 1000) / 1000.0) * 1.2 + 1.0;
-			obj->transform.scaleY = scale*0.8;// ((rand() % 1000) / 1000.0) * 1.2 + 1.0;
-			obj->transform.scaleZ = scale;// ((rand() % 1000) / 1000.0) * 1.2 + 1.0;
+			obj->transform.scale = glm::vec3(scale, scale* 0.8, scale);// ((rand() % 1000) / 1000.0) * 1.2 + 1.0;
 			obj->collidable = false;
 			obj->mesh = cloud;
 			obj->shader = flatShader;
@@ -311,12 +304,12 @@ int main()
 	std::shared_ptr<Player> player(new Player(0.4, std::shared_ptr<Mesh>(NULL), &UI));
 	player->setJump(10.0);
 	player->setJumpTime(0.5);
-	player->mesh = cloud;
-	player->transform.scaleX = 1.2;
-	player->transform.scaleY = 1.2;
-	player->transform.scaleZ = 1.2;
-	player->shader = shader0;
-	world1->addChild(player);
+//	player->mesh = cloud;
+//	player->transform.scaleX = 1.2;
+//	player->transform.scaleY = 1.2;
+//	player->transform.scaleZ = 1.2;
+//	player->shader = shader0;
+//	world1->addChild(player);
 	entities.push_back(player);
 	double ballSpeed = 100;
 	land->setTarget(player);
@@ -336,27 +329,23 @@ int main()
 
 	//HUD
 	std::shared_ptr<Gun> gun(new Gun(0.05, portalGun, &UI));
-	gun->relative.x = 0;
-	gun->relative.z = 0.5;
-	gun->relative.y = -0.5;
-	gun->relative.angleY = 0;
-	gun->relative.angleX = -10;
+	gun->relative.position = glm::vec3(0, 0.5, -0.5);
+	gun->relative.rotation.y = 0;
+	gun->relative.rotation.x = -10;
 	double gunScale = 0.1;
-	gun->transform.scaleX = gunScale;
-	gun->transform.scaleY = gunScale;
-	gun->transform.scaleZ = gunScale;
+	gun->transform.scale = glm::vec3(gunScale);
 	gun->mesh = portalGun;
 	gun->shader = shader0;
-	world1->addChild(gun);
+//	world1->addChild(gun);
 	items.push_back(gun);
 
 	//LIGHTING
 
 	std::shared_ptr<Light> light0 = Light::createPointLight(glm::vec3(0, 20, 0), 60.0, 50.0, glm::vec3(255,255,255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
-	UI.addLight(light0);
+	//UI.addLight(light0);
 
 	std::shared_ptr<Light> light1 = Light::createPointLight(glm::vec3(0, 40, 0), 120, 10.0, glm::vec3(255, 255, 255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
-	UI.addLight(light1);
+	//UI.addLight(light1);
 
 	glm::vec4 lightAxis(0, 1, 0, 0);
 
@@ -365,6 +354,9 @@ int main()
 	double lightAngleY = 120;
 	glm::mat4 rotation = glm::toMat4(glm::quat(glm::vec3(lightAngleX * TO_RAD, lightAngleY * TO_RAD, lightAngleZ * TO_RAD)));
 	lightAxis = rotation * lightAxis;
+
+	//Light::globalLightDirection = glm::vec3(lightAxis);
+	//Light::globalLightIntensity = 0.2;
 	
 	double shootDelay = 0.1;
 	double shootRefill = 0.0;
@@ -377,6 +369,8 @@ int main()
 
 	double lightPolarity = 1.0;
 	double lightPolarity1 = 1.0;
+
+	//std::cout << world1->children.size() << "\n";
 
 	do
 	{
@@ -437,12 +431,11 @@ int main()
 			{
 				double radius = 0.2;
 				glm::vec3 direction = Transform::getTransformedZ(player->lookRotation + glm::vec3(Gen::random() * 60, Gen::random() * 60, Gen::random() * 60));
-				std::shared_ptr<Projectile> proj = Projectile::makeProjectile(radius, mesh1, &UI, glm::vec3(player->transform.x, player->transform.y, player->transform.z), direction, ballSpeed);
-				proj->transform.scaleX = radius;
-				proj->transform.scaleY = radius;
-				proj->transform.scaleZ = radius;
+				std::shared_ptr<Projectile> proj = Projectile::makeProjectile(radius, mesh1, &UI, player->transform.position, direction, ballSpeed);
+				proj->transform.scale = glm::vec3(radius);
 				proj->setFillColor(rand() % 255, rand() % 255, rand() % 255);
 				proj->shader = shader0;
+				proj->slidable = true;
 				world1->addChild(proj);
 				entities.push_back(proj);
 			}
@@ -463,7 +456,7 @@ int main()
 		player->move(tree);//land noCollider tree
 		player->interact(items);
 
-		Audio::configureListener(glm::vec3(player->transform.x, player->transform.y, player->transform.z), player->lookRotation);
+		Audio::configureListener(player->transform.position, player->lookRotation);
 
 		if(updateToggle)
 			land->update();
@@ -473,13 +466,13 @@ int main()
 		//lightAxis = rotation * lightAxis;
 
 
-		light0->x += lightPolarity * 6.0 * UI.deltaTime;
-		if (light0->x >= 20.0) lightPolarity = -1.0;
-		if (light0->x <= -20.0) lightPolarity = 1.0;
-
-		light1->z += lightPolarity1 * 10.0 * UI.deltaTime;
-		if (light1->z >= 30.0) lightPolarity1 = -1.0;
-		if (light1->z <= -20.0) lightPolarity1 = 1.0;
+		light0->position.x += lightPolarity * 6.0 * UI.deltaTime;
+		if (light0->position.x >= 20.0) lightPolarity = -1.0;
+		if (light0->position.x <= -20.0) lightPolarity = 1.0;
+	
+		light1->position.z += lightPolarity1 * 10.0 * UI.deltaTime;
+		if (light1->position.z >= 30.0) lightPolarity1 = -1.0;
+		if (light1->position.z <= -20.0) lightPolarity1 = 1.0;
 
 	//	light0->x = player->transform.x;
 	//	light0->y = player->transform.y;

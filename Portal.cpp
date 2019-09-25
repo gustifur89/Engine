@@ -24,9 +24,7 @@ Portal::~Portal()
 void Portal::setRadius(float radius)
 {
 	this->radius = radius;
-	transform.scaleX = radius;
-	transform.scaleY = radius;
-	transform.scaleZ = radius;
+	transform.scale = glm::vec3(radius);
 }
 
 void Portal::setWorld(std::shared_ptr<GameObject> world)
@@ -43,7 +41,7 @@ void Portal::renderFunc(Camera& camera)
 		glm::mat4 scale = glm::scale(glm::vec3(1.0 / radius));
 
 		//glm::quat rotation = glm::lookAt(glm::vec3(camera.x, camera.y, camera.z), glm::vec3(transform.x, transform.y, transform.z), glm::vec3(0, 1, 0));
-		glm::quat rotation = glm::lookAt(glm::vec3(transform.x, transform.y, transform.z), glm::vec3(camera.x, camera.y, camera.z), glm::vec3(0, 1, 0));
+		glm::quat rotation = glm::lookAt(transform.position, camera.position, glm::vec3(0, 1, 0));
 		glm::vec3 euler = (float) TO_DEG * glm::eulerAngles(rotation);
 
 	//	transform.angleX = euler.x;
@@ -64,11 +62,7 @@ void Portal::renderFunc(Camera& camera)
 
 float Portal::getMinZ(Camera camera)
 {
-	float x = camera.x - this->transform.x;
-	float y = camera.y - this->transform.y;
-	float z = camera.z - this->transform.z;
-
-	return sqrt(x*x + y*y + z*z);
+	return glm::length(camera.position - this->transform.position);
 }
 
 double Portal::distanceToPlane(glm::vec3 entPos, glm::vec3 dir, glm::vec3 planePoint)
@@ -88,8 +82,8 @@ void Portal::portalRender(Camera camera)
 	//solve for minZ
 	//get distance from the viewer to the plane of the portal, perpedicular to the direction... so closest point.
 
-	glm::vec3 portalVertex = glm::vec3(this->transform.x, this->transform.y, this->transform.z);
-	float minZ = distanceToPlane(camera.getPosition(), Transform::getTransformedZ(glm::vec3(camera.angleX, camera.angleY, camera.angleZ)), portalVertex);// fmax((getMinZ(camera) - radius), 0.1f);
+	glm::vec3 portalVertex = this->transform.position;
+	float minZ = distanceToPlane(camera.position, Transform::getTransformedZ(camera.rotation), portalVertex);// fmax((getMinZ(camera) - radius), 0.1f);
 //	float minZA = fmax((getMinZ(camera) - radius), 0.1f);
 
 	minZ = fmax(0.0, minZ - 0.5);
@@ -99,13 +93,9 @@ void Portal::portalRender(Camera camera)
 	//camera.fov * (1.0 - (minZ / camera.maxZ))
 	Camera portalCamera(camera.fov, 1.0f, minZ, camera.maxZ);
 
-	portalCamera.x = otherPortal->transform.x - (this->transform.x - camera.x);
-	portalCamera.y = otherPortal->transform.y - (this->transform.y - camera.y);
-	portalCamera.z = otherPortal->transform.z - (this->transform.z - camera.z);
+	portalCamera.position = otherPortal->transform.position - (this->transform.position - camera.position);
 
-	portalCamera.angleX = camera.angleX;
-	portalCamera.angleY = camera.angleY;
-	portalCamera.angleZ = camera.angleZ;
+	portalCamera.rotation = camera.rotation;
 
 	glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderTexture.frameBuffer);
@@ -136,18 +126,14 @@ void Portal::linkPortals(std::shared_ptr<Portal> portal1, std::shared_ptr<Portal
 
 void Portal::collideInternal(std::shared_ptr<Entity> entity)
 {
-	double x = entity->transform.x - transform.x;
-	double y = entity->transform.y - transform.y;
-	double z = entity->transform.z - transform.z;
-	double dist = sqrt(x*x + y*y + z*z);
+	glm::vec3 pos = entity->transform.position - transform.position;
+	double dist = glm::length(pos);
 
 	if (dist <= entity->collider.radius + radius)
 	{
 		if (!entity->portalCollide && otherPortal)
 		{
-			entity->transform.x = otherPortal->transform.x + x;
-			entity->transform.y = otherPortal->transform.y + y;
-			entity->transform.z	= otherPortal->transform.z + z;
+			entity->transform.position = otherPortal->transform.position + pos;
 		//	entity->portalCollide = true;
 		}
 		entity->portalCollide = true;

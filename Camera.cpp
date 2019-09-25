@@ -11,6 +11,7 @@ Camera::Camera(float fov, float aspectRatio, float minZ, float maxZ)
 		maxZ				// Far clipping plane. Keep as little as possible.
 	);
 
+	viewFrustum = Frustum(projectionMatrix);
 	this->fov = fov;
 	this->aspectRatio = aspectRatio;
 	this->minZ = minZ;
@@ -33,10 +34,9 @@ glm::mat4 Camera::getTransform()
 {
 	glm::vec4 lookDirection(0,0,1, 0);	//Looking direction in viewSpace
 	//rotate by the direction
-	glm::mat4 rotation = glm::toMat4(glm::quat(glm::vec3(angleX * TO_RAD, angleY * TO_RAD, angleZ * TO_RAD)));
+	glm::mat4 rotationMatrix = glm::toMat4(glm::quat((float)TO_RAD * rotation));
 	//roate the look direction by the rotation
-	lookDirection = rotation * lookDirection;
-	glm::vec3 position(x, y, z);
+	lookDirection = rotationMatrix * lookDirection;
 	glm::vec3 lookAt = position + glm::vec3(lookDirection);
 
 	return glm::lookAt(
@@ -46,11 +46,36 @@ glm::mat4 Camera::getTransform()
 	);
 }
 
+bool Camera::isSphereInView(glm::vec3 position, double radius, glm::mat4 modelMatrix)
+{
+	glm::vec4 pos = glm::vec4(position, 1);
+	pos = getTransform() * modelMatrix * pos;
+	return viewFrustum.viewSpaceSphereInFrustum(glm::vec3(pos), radius);
+}
+
+bool Camera::isBoxInView(Bounds bounds, glm::mat4 modelMatrix)
+{
+	//camera.getProjection() * camera.getTransform()
+	//Box in world space
+		//put vectors into view space.
+//	bounds = bounds.applyMatrix(getProjection() * getTransform() * modelMatrix);	
+//	if (bounds.low.x <= 1.0 && bounds.low.y <= 1.0 && bounds.low.z <= 1.0 && bounds.high.x >= -1.0 && bounds.high.y >= -1.0 && bounds.high.z >= -1.0)
+//	{
+//		return true;
+//	}
+//	return false;
+			
+	//bounds = bounds.applyMatrix(getTransform() * modelMatrix);
+	return viewFrustum.viewSpaceBoxInFrustum(getTransform() * modelMatrix, bounds);
+}
+
 bool Camera::isLightInView(std::shared_ptr<Light> light)
 {
 	//checks the collision between the viewing frustum and the light's sphere
 	//TODO: add
-	return true;
+	glm::vec3 dP = light->position - this->position;
+	if(length(dP) <= this->maxZ)
+		return true;
 }
 
 bool Camera::inView(glm::vec3 p)

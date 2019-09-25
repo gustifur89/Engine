@@ -12,7 +12,7 @@ protected:
 	void bindVAO();
 	void unbindVAO();
 	void clearBuffers();
-
+	void recalculateBounds();
 	std::vector<GLuint> bufferAttribs;
 public:
 	Mesh();
@@ -28,6 +28,7 @@ public:
 	std::vector<GLfloat> vertexBuffer;
 	std::vector<GLfloat> normalBuffer;
 	std::vector<GLuint> bufferIDs;
+	Bounds bounds;
 	int indexCount;
 	int vertexCount;
 	int numVBOs;
@@ -58,6 +59,7 @@ public:
 	static std::shared_ptr<ColorMesh> meshFromTriangles(std::vector<std::shared_ptr<Triangle>> faces, int r, int g, int b);
 	static std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::shared_ptr<Triangle>> faces, int r, int g, int b);
 	static std::shared_ptr<ColorMesh> meshFromVertexGrid(std::vector<std::vector<std::vector<bool>>> grid, Bounds bounds, int r, int g, int b);
+	static std::shared_ptr<ColorMesh> applyMatrixToMesh(std::shared_ptr<ColorMesh> mesh, glm::mat4 matrix);
 };
 
 class TextureMesh : public Mesh

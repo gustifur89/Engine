@@ -2,9 +2,12 @@
 
 //========================= Light ====================
 
+glm::vec3 Light::globalLightDirection = glm::vec3(0, 0, 0);
+double Light::globalLightIntensity = 0.0;
+
 Light::Light()
 {
-
+	numSubLights = 0;
 }
 
 Light::~Light()
@@ -12,15 +15,24 @@ Light::~Light()
 
 }
 
-glm::mat4 Light::getProjection(int index)
+glm::mat4 Light::getViewTransform(int index)
 {
-	glm::mat4 projection = projectionMatrix[index];
 	glm::vec3 direction = dir[index];
 	glm::vec3 directionCompliment = dirComp[index];
 
-	glm::vec3 pos(x, y, z);
-	glm::vec3 lookAt = pos + direction;
-	glm::mat4 matrix = glm::lookAt( pos, lookAt, directionCompliment);
+	glm::vec3 lookAt = position + direction;
+	glm::mat4 matrix = glm::lookAt(position, lookAt, directionCompliment);
+	return matrix;
+}
+
+glm::mat4 Light::getProjection(int index)
+{
+	glm::mat4 projection = projectionMatrix[index];
+//glm::vec3 direction = dir[index];
+//glm::vec3 directionCompliment = dirComp[index];
+//
+//glm::vec3 lookAt = position + direction;
+//glm::mat4 matrix = glm::lookAt(position, lookAt, directionCompliment);
 
 	/*
 	float near_plane = 1.0f, far_plane = 7.5f;
@@ -31,7 +43,7 @@ glm::mat4 Light::getProjection(int index)
 		glm::vec3(0.0f, 1.0f, 0.0f));
 	return lightProjection * lightView;
 	//*/
-	return projection * matrix;
+	return projection * getViewTransform(index);
 }
 
 void Light::addIndividualSpotLight(glm::vec3 pos, glm::vec3 direction, double radius, double intensity, glm::vec3 color)
@@ -43,6 +55,7 @@ void Light::addIndividualSpotLight(glm::vec3 pos, glm::vec3 direction, double ra
 		(float) radius				// Far clipping plane. Keep as little as possible.
 	);
 
+	viewFrustum = Frustum(projection);
 	//glm::vec3 lookAt = pos + direction;
 	//glm::mat4 matrix = glm::lookAt( pos, lookAt, glm::vec3(0, 1, 0) );
 
@@ -54,7 +67,7 @@ void Light::addIndividualSpotLight(glm::vec3 pos, glm::vec3 direction, double ra
 	this->color = color;
 	projectionMatrix.push_back(projection);
 	glm::vec3 directionCompliment(0, 1, 0);
-
+	numSubLights++;
 	if (direction == glm::vec3(0, 1, 0) || direction == glm::vec3(0, -1, 0))
 	{
 		directionCompliment = glm::vec3(1, 0, 0);
@@ -75,9 +88,7 @@ std::shared_ptr<Light> Light::createPointLight(glm::vec3 pos, double radius, dou
 	light->addIndividualSpotLight(pos, glm::vec3(0, 0, 1), radius, intensity, color);
 	light->addIndividualSpotLight(pos, glm::vec3(0, 0, -1), radius, intensity, color);
 
-	light->x = pos.x;
-	light->y = pos.y;
-	light->z = pos.z;
+	light->position = pos;
 
 	return light;
 }
@@ -94,9 +105,33 @@ std::shared_ptr<Light> Light::createSpotLight(glm::vec3 pos, glm::vec3 rotation,
 
 	light->addIndividualSpotLight(pos, lookDirection, radius, intensity, color);
 
-	light->x = pos.x;
-	light->y = pos.y;
-	light->z = pos.z;
+	light->position = pos;
 
 	return light;
+}
+
+bool Light::isBoxInView(Bounds bounds)
+{
+	//Box in world space
+		//put vectors into view space.
+	Bounds bounds_;
+	for (int i = 0; i < numSubLights; i++)
+	{
+		//bounds_ = bounds.applyMatrix(getViewTransform(i));
+		if (viewFrustum.viewSpaceBoxInFrustum(getViewTransform(i), bounds_))
+			return true;
+	}
+	return false;
+}
+
+bool Light::isBoxInListView(Bounds bounds, glm::mat4 modelMatrix, std::vector<std::shared_ptr<Light>> lights)
+{
+	bounds = bounds.applyMatrix(modelMatrix);
+	//problem with AABB not transforming into rotated space
+	for (int i = 0; i < lights.size(); i++)
+	{
+		if (lights[i]->isBoxInView(bounds))
+			return true;
+	}
+	return false;
 }

@@ -192,7 +192,7 @@ void SoundEmitter::setMaxDistance(double maxDistance)
 void SoundEmitter::play()
 {
 	stop();
-	alSource3f(sourceID, AL_POSITION, transform.x, transform.y, transform.z);
+	alSource3f(sourceID, AL_POSITION, transform.position.x, transform.position.y, transform.position.z);
 	alSourcePlay(sourceID);
 }
 

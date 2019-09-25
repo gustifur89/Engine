@@ -6,6 +6,7 @@ GameObject::GameObject()
 {
 	visible = true;
 	collidable = true;
+	persistentVisible = false;
 }
 
 void GameObject::renderFunc(Camera& camera)
@@ -13,13 +14,22 @@ void GameObject::renderFunc(Camera& camera)
 	//no nothing
 }
 
-void GameObject::renderShadow(std::shared_ptr<Shader> ShadowShader, int location)
+void GameObject::renderShadow(std::vector<std::shared_ptr<Light>> lights, std::shared_ptr<Shader> ShadowShader, int location)
 {
 	if (!this || !visible) return;
-	this->renderShadowFunc(ShadowShader, location);
+	///*
+	if (mesh)
+	{
+		if (Light::isBoxInListView(mesh->bounds, this->transform.getTransform(), lights))
+		{
+			this->renderShadowFunc(ShadowShader, location);
+		}
+	}
+	//*/
+	//this->renderShadowFunc(ShadowShader, location);
 	for (int i = 0; i < children.size(); i++)
 	{
-		children[i]->renderShadow(ShadowShader, location);
+		children[i]->renderShadow(lights, ShadowShader, location);
 	}
 }
 
@@ -28,10 +38,36 @@ void GameObject::renderShadowFunc(std::shared_ptr<Shader> ShadowShader, int loca
 	//do nothing
 }
 
+Bounds GameObject::getWorldSpaceBounds()
+{
+	if (!mesh)
+	{
+		//then no mesh. just retrun the postion
+		return Bounds(transform.position, transform.position);
+	}
+	else
+	{
+
+	}
+
+	return Bounds();
+}
+
 void GameObject::render(Camera& camera)
 {
 	if (!this || !visible) return;
-	this->renderFunc(camera);
+	
+	///*
+	if (mesh)
+	{
+		if (camera.isBoxInView(mesh->bounds, this->transform.getTransform()))
+		{
+			this->renderFunc(camera);
+		}
+	}
+	//*/
+	//this->renderFunc(camera);
+
 	for (int i = 0; i < children.size(); i++)
 	{
 		children[i]->render(camera);

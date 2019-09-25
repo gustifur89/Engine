@@ -19,10 +19,13 @@ public:
 	static glm::vec3 getTransformedY(glm::vec3 angles);
 	static glm::vec3 getTransformedZ(glm::vec3 angles);
 
-	glm::vec3 getPosition();
+//	glm::vec3 getPosition();
 	//parameters
-	double x, y, z;
-	double angleX, angleY, angleZ;
-	double scaleX, scaleY, scaleZ;
+//	double x, y, z;
+//	double angleX, angleY, angleZ;
+//	double scaleX, scaleY, scaleZ;
+	glm::vec3 position;
+	glm::vec3 rotation;
+	glm::vec3 scale;
 };
 

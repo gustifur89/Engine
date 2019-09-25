@@ -28,6 +28,41 @@ void Mesh::unbindVAO()
 	glBindVertexArray(0);
 }
 
+void Mesh::recalculateBounds()
+{
+	glm::vec3 low(0,0,0);
+	glm::vec3 high(0,0,0);
+
+	bool first = true;
+
+	for (int i = 0; i < vertexBuffer.size(); i += 3)
+	{
+		if (first)
+		{
+			first = false;
+			low.x = vertexBuffer[i + 0];
+			high.x = vertexBuffer[i + 0];
+			low.y = vertexBuffer[i + 1];
+			high.y = vertexBuffer[i + 1];
+			low.z = vertexBuffer[i + 2];
+			high.z = vertexBuffer[i + 2];
+		}
+
+		float x = vertexBuffer[i + 0];
+		float y = vertexBuffer[i + 1];
+		float z = vertexBuffer[i + 2];
+
+		if (x < low.x) low.x = x;
+		if (x > high.x) high.x = x;
+		if (y < low.y) low.y = y;
+		if (y > high.y) high.y = y;
+		if (z < low.z) low.z = z;
+		if (z > high.z) high.z = z;
+	}
+
+	this->bounds = Bounds(low, high);
+}
+
 void Mesh::bindArrays()
 {
 }
@@ -115,11 +150,12 @@ std::vector<std::shared_ptr<Triangle>> Mesh::toTriangles(glm::mat4 transform)
 		int i_p2 = 3 * indexBuffer[i + 1];
 		int i_p3 = 3 * indexBuffer[i + 2];
 
-		glm::vec3 p1 = transform * glm::vec4(vertexBuffer[i_p1 + 0], vertexBuffer[i_p1 + 1], vertexBuffer[i_p1 + 2], 1);
-		glm::vec3 p2 = transform * glm::vec4(vertexBuffer[i_p2 + 0], vertexBuffer[i_p2 + 1], vertexBuffer[i_p2 + 2], 1);
-		glm::vec3 p3 = transform * glm::vec4(vertexBuffer[i_p3 + 0], vertexBuffer[i_p3 + 1], vertexBuffer[i_p3 + 2], 1);
+		glm::vec4 p1 = transform * glm::vec4(vertexBuffer[i_p1 + 0], vertexBuffer[i_p1 + 1], vertexBuffer[i_p1 + 2], 1);
+		glm::vec4 p2 = transform * glm::vec4(vertexBuffer[i_p2 + 0], vertexBuffer[i_p2 + 1], vertexBuffer[i_p2 + 2], 1);
+		glm::vec4 p3 = transform * glm::vec4(vertexBuffer[i_p3 + 0], vertexBuffer[i_p3 + 1], vertexBuffer[i_p3 + 2], 1);
 
-		faces.push_back(std::shared_ptr<Triangle>(new Triangle(p1, p2, p3)));
+		//faces.push_back(std::shared_ptr<Triangle>(new Triangle(p1/p1.w, p2/p2.w, p3/p3.w)));
+		faces.push_back(std::shared_ptr<Triangle>(new Triangle(p1 / p1.w, p2 / p2.w, p3 / p3.w)));
 	}
 	return faces;
 }
@@ -804,6 +840,7 @@ std::shared_ptr<ColorMesh> ColorMesh::loadFromFile(std::string fileName)
 	mesh->bindVertexAttribVBO(0, 3, mesh->vertexBuffer);
 	mesh->bindVertexAttribVBO(1, 3, mesh->normalBuffer);
 	mesh->bindVertexAttribVBO(2, 3, mesh->colorBuffer);
+	mesh->recalculateBounds();
 	return mesh;
 }
 
@@ -936,6 +973,7 @@ std::shared_ptr<ColorMesh> ColorMesh::triangle()
 	mesh->bindVertexAttribVBO(0, 3, mesh->vertexBuffer);
 	mesh->bindVertexAttribVBO(1, 3, mesh->normalBuffer);
 	mesh->bindVertexAttribVBO(2, 3, mesh->colorBuffer);
+	mesh->recalculateBounds();
 	return mesh;
 }
 
@@ -943,6 +981,7 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromTriangles(std::vector<std::shared_
 {
 	std::shared_ptr<ColorMesh> mesh = meshFromTrianglesUnbound(faces, r, g, b);
 	mesh->bindArrays();
+	mesh->recalculateBounds();
 	return mesh;
 }
 
@@ -1082,7 +1121,7 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::
 		//		mesh->colorBuffer.push_back(faces[i]->normal.z + 0.5);
 		mesh->indexBuffer.push_back(3 * i + 2);
 	}
-
+	mesh->recalculateBounds();
 	return mesh;
 }
 
@@ -1142,6 +1181,13 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector
 	}
 
 	return meshFromTriangles(faces, r, g, b);
+}
+
+std::shared_ptr<ColorMesh> ColorMesh::applyMatrixToMesh(std::shared_ptr<ColorMesh> mesh, glm::mat4 matrix)
+{
+	std::vector<std::shared_ptr<Triangle>> triangles = mesh->toTriangles(matrix);
+	
+	return meshFromTriangles(triangles, 255,0,0);
 }
 
 // =================================== TextureMesh ============================
@@ -1278,5 +1324,6 @@ std::shared_ptr<TextureMesh> TextureMesh::loadFromFile(std::string fileName)
 	mesh->bindVertexAttribVBO(0, 3, mesh->vertexBuffer);
 	mesh->bindVertexAttribVBO(1, 3, mesh->normalBuffer);
 	mesh->bindVertexAttribVBO(2, 2, mesh->uvBuffer);
+	mesh->recalculateBounds();
 	return mesh;
 }

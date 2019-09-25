@@ -2,6 +2,7 @@
 #include "Headers.h"
 #include "Transform.h"
 #include "Light.h"
+#include "Geometry.h"
 
 class Camera : public Transform
 {
@@ -17,6 +18,9 @@ public:
 	glm::mat4 getProjection();
 	
 
+	bool isSphereInView(glm::vec3 position, double radius, glm::mat4 modelMatrix);
+	bool isBoxInView(Bounds bounds, glm::mat4 modelMatrix);
+
 	bool isLightInView(std::shared_ptr<Light> light);
 
 	bool inView(glm::vec3 p);
@@ -28,5 +32,6 @@ public:
 	GLfloat maxZ;
 	GLfloat gamma;
 	GLfloat exposure;
+	Frustum viewFrustum;
 };
 
