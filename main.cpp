@@ -342,10 +342,10 @@ int main()
 	//LIGHTING
 
 	std::shared_ptr<Light> light0 = Light::createPointLight(glm::vec3(0, 20, 0), 60.0, 50.0, glm::vec3(255,255,255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
-	//UI.addLight(light0);
+	UI.addLight(light0);
 
 	std::shared_ptr<Light> light1 = Light::createPointLight(glm::vec3(0, 40, 0), 120, 10.0, glm::vec3(255, 255, 255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
-	//UI.addLight(light1);
+	UI.addLight(light1);
 
 	glm::vec4 lightAxis(0, 1, 0, 0);
 

@@ -6,11 +6,12 @@
 
 class UIManager
 {
-private:
+protected:
 	double oldTime;
 	double oldMouseX, oldMouseY;
 	void renderWindow();
 	void setHDR(float gamma, float exposure);
+	std::vector<std::shared_ptr<Light>> cullLights(Camera& camera);
 	GLuint clearColorLoc;
 	GLuint gammaLoc;
 	GLuint exposureLoc;
@@ -57,7 +58,7 @@ public:
 	void unlockMouse();
 	bool getMouseLockState();
 	void setDeltaMouse();
-	int setShadowMap(Camera& camera);
+	int setShadowMap(Camera& camera, std::vector<std::shared_ptr<Light>> lights_);
 
 	void delay(double timeDelay);
 

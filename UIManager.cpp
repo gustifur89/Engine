@@ -338,7 +338,23 @@ void UIManager::setHDR(float gamma, float exposure)
 	this->exposure = exposure;
 }
 
-int UIManager::setShadowMap(Camera& camera)
+std::vector<std::shared_ptr<Light>> UIManager::cullLights(Camera& camera)
+{
+	std::vector<std::shared_ptr<Light>> lightsOut;
+
+	for (int i = 0; i < lights.size(); i++)
+	{
+		if (camera.isLightInView(lights[0]))
+		{
+			lightsOut.push_back(lights[i]);
+		}
+	}
+
+
+	return lightsOut;
+}
+
+int UIManager::setShadowMap(Camera& camera, std::vector<std::shared_ptr<Light>> lights_)
 {
 	//do things with lights
 	//TODO: cull the lights if they are outside the camera's viewing frustum
@@ -357,17 +373,17 @@ int UIManager::setShadowMap(Camera& camera)
 
 	int numShadows = 0;
 
-	for (int i = 0; i < lights.size(); i++)
+	for (int i = 0; i < lights_.size(); i++)
 	{
-		for (int j = 0; j < lights[i]->projectionMatrix.size(); j++)
+		for (int j = 0; j < lights_[i]->projectionMatrix.size(); j++)
 		{
 			numShadows++;
 			//lightSSBO
-			lightSSBO.push_back((float)lights[i]->position.x);
-			lightSSBO.push_back((float)lights[i]->position.y);
-			lightSSBO.push_back((float)lights[i]->position.z);
+			lightSSBO.push_back((float)lights_[i]->position.x);
+			lightSSBO.push_back((float)lights_[i]->position.y);
+			lightSSBO.push_back((float)lights_[i]->position.z);
 			lightSSBO.push_back(0.0f);
-			glm::mat4 mat = lights[i]->getProjection(j);
+			glm::mat4 mat = lights_[i]->getProjection(j);
 
 			//GLfloat * stuff = gl
 			//float * projMat = &mat[0][0];// glm::value_ptr(mat);
@@ -387,8 +403,8 @@ int UIManager::setShadowMap(Camera& camera)
 			}
 		//	&matrix[0][0]
 			lightSSBO.push_back(0.0f);
-			lightSSBO.push_back((float)lights[i]->radius);
-			lightSSBO.push_back((float)lights[i]->intensity);
+			lightSSBO.push_back((float)lights_[i]->radius);
+			lightSSBO.push_back((float)lights_[i]->intensity);
 
 			lightSSBO.push_back(0.0f);
 		//	lightSSBO.push_back((float)lights[i]->color.x / 255.0f);
@@ -440,7 +456,7 @@ void UIManager::display(Camera& camera)
 	//	stage->renderShadow(windowShader, shadowMatrixLoc);
 	//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
+	
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowTexture.depthMapFBO);
 	glViewport(0, 0, 1024, 1024);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -448,7 +464,9 @@ void UIManager::display(Camera& camera)
 
 	shadowShader->useShader();
 	
-	int numShadows = setShadowMap(camera);
+	std::vector<std::shared_ptr<Light>> lights_ = cullLights(camera);
+
+	int numShadows = setShadowMap(camera, lights_);
 
 	glUniform1i(numShadowSSLoc, numShadows);
 	//shadowShader->loadMatrix(lightLoc, lights[0]->getProjection(0));
@@ -456,7 +474,7 @@ void UIManager::display(Camera& camera)
 
 	glCullFace(GL_FRONT);
 	//glDisable(GL_CULL_FACE);
-	stage->renderShadow(lights, windowShader, shadowMatrixLoc);
+	stage->renderShadow(lights_, windowShader, shadowMatrixLoc);
 	//glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
@@ -483,7 +501,7 @@ void UIManager::display(Camera& camera)
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 
-	//std::cout << (1.0 / deltaTime) << "\n";
+	std::cout << (1.0 / deltaTime) << "\n";
 
 }
 

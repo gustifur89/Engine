@@ -492,10 +492,29 @@ public:
 	
 		Triangle LZ(vLLL, vLHL, vHLL);
 		LZ = LZ.applyMatrix(frustum);
-	
 		plane[0] = glm::vec4(LZ.normal, LZ.d);
-	//	plane[1] = glm::vec4(HY.normal, HY.getD());
-	
+
+		Triangle HZ(vLLH, vLHH, vHLH);
+		HZ = HZ.applyMatrix(frustum);
+		plane[1] = glm::vec4(HZ.normal, HZ.d);
+
+		Triangle LX(vLLL, vLHL, vLLH);
+		LX = LX.applyMatrix(frustum);
+		plane[2] = glm::vec4(LX.normal, LX.d);
+
+		Triangle HX(vHLL, vHLH, vHHL);
+		HX = HX.applyMatrix(frustum);
+		plane[3] = glm::vec4(HX.normal, HX.d);
+
+		Triangle LY(vHLH, vLLH, vHLL);
+		LY = LY.applyMatrix(frustum);
+		plane[4] = glm::vec4(LY.normal, LY.d);
+
+		Triangle HY(vHHH, vHHL, vLHH);
+		HY = HY.applyMatrix(frustum);
+		plane[5] = glm::vec4(HY.normal, HY.d);
+
+
 		glm::vec4 vLLL_ = frustum * glm::vec4(vLLL, 1);
 		glm::vec4 vLLH_ = frustum * glm::vec4(vLLH, 1);
 		glm::vec4 vLHL_ = frustum * glm::vec4(vLHL, 1);
@@ -524,7 +543,7 @@ public:
 		points[6] = vHHL;
 		points[7] = vHHH;
 
-		glm::vec3 tempNorm;
+		//glm::vec3 tempNorm;
 
 
 		//tempNorm = glm::normalize(glm::cross(vLLL - vHLL, vHHL - vHLL));
@@ -559,19 +578,20 @@ public:
 	bool viewSpaceBoxInFrustum(glm::mat4 MVMatrix, Bounds bounds)
 	{
 		
-	//	int i = 0;
-	//	int out = 0;
-	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.low.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
-	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.low.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
-	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.high.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
-	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.high.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
-	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.low.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
-	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.low.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
-	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.high.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
-	//	out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.high.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
-	//	if (out == 8) return false;
+		//int i = 0;
+		//int out = 0;
+		//out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.low.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
+		//out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.low.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
+		//out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.high.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
+		//out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.high.y, bounds.low.z,		1.0f)) < 0.0) ? 1 : 0);
+		//out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.low.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
+		//out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.low.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
+		//out += ((distanceFromPlane(plane[i], glm::vec4(bounds.low.x, bounds.high.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
+		//out += ((distanceFromPlane(plane[i], glm::vec4(bounds.high.x, bounds.high.y, bounds.high.z,		1.0f)) < 0.0) ? 1 : 0);
+		//if (out == 8) return false;
+		//return true;
 
-
+	//	return false;
 
 		bounds = bounds.applyMatrix(frustum * MVMatrix);
 	//	std::cout << "low : " << (bounds.low.z) << "\thigh : " << (bounds.high.z) << "\n";
@@ -585,39 +605,44 @@ public:
 
 		//return true;
 
-		/*
-		int frustumPlanes = 1;
-		int pointsNum = 8;
-		bool do_second = false;
+		///*
 
-		// check box outside/inside of frustum
-		for (int i = 0; i < frustumPlanes; i++)
-		{
-			int out = 0;
-			out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.low.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
-			out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.low.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
-			out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.high.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
-			out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.high.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
-			out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.low.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
-			out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.low.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
-			out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.high.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
-			out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.high.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
-			if (out == 8) return false;
-		}
+	//	bounds = bounds.applyMatrix(MVMatrix);
+	//
+	//	int frustumPlanes = 6;
+	//	int pointsNum = 0;
+	//	bool do_second = false;
+	//
+	//	// check box outside/inside of frustum
+	//	for (int i = 0; i < frustumPlanes; i++)
+	//	{
+	//		int out = 0;
+	//		out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.low.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
+	//		out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.low.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
+	//		out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.high.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
+	//		out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.high.y,	bounds.low.z	, 1.0f)) < 0.0) ? 1 : 0);
+	//		out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.low.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
+	//		out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.low.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
+	//		out += ((glm::dot(plane[i], glm::vec4(bounds.low.x, bounds.high.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
+	//		out += ((glm::dot(plane[i], glm::vec4(bounds.high.x, bounds.high.y,	bounds.high.z	, 1.0f)) < 0.0) ? 1 : 0);
+	//		if (out == 8) return false;
+	//	}
+	//
+	//	// check frustum outside/inside box
+	//	if (do_second)
+	//	{
+	//		int out;
+	//		out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].x > bounds.high.x) ? 1 : 0); if (out == 8) return false;
+	//		out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].x < bounds.low.x) ? 1 : 0); if (out == 8) return false;
+	//		out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].y > bounds.high.y) ? 1 : 0); if (out == 8) return false;
+	//		out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].y < bounds.low.y) ? 1 : 0); if (out == 8) return false;
+	//		out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].z > bounds.high.z) ? 1 : 0); if (out == 8) return false;
+	//		out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].z < bounds.low.z) ? 1 : 0); if (out == 8) return false;
+	//	}
+	//	
+	//	return true;
 
-		// check frustum outside/inside box
-		if (do_second)
-		{
-			int out;
-			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].x > bounds.high.x) ? 1 : 0); if (out == 8) return false;
-			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].x < bounds.low.x) ? 1 : 0); if (out == 8) return false;
-			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].y > bounds.high.y) ? 1 : 0); if (out == 8) return false;
-			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].y < bounds.low.y) ? 1 : 0); if (out == 8) return false;
-			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].z > bounds.high.z) ? 1 : 0); if (out == 8) return false;
-			out = 0; for (int i = 0; i < pointsNum; i++) out += ((points[i].z < bounds.low.z) ? 1 : 0); if (out == 8) return false;
-		}
-		
-		*/
+		//*/
 		//return true;
 
 
@@ -663,7 +688,7 @@ public:
 			//	ret = INTERSECT;
 		}
 		return true;
-		*/
+	//	*/
 	}
 
 	bool viewSpaceSphereInFrustum(glm::vec3 center, float radius)

@@ -73,9 +73,12 @@ bool Camera::isLightInView(std::shared_ptr<Light> light)
 {
 	//checks the collision between the viewing frustum and the light's sphere
 	//TODO: add
-	glm::vec3 dP = light->position - this->position;
-	if(length(dP) <= this->maxZ)
-		return true;
+//	glm::vec3 dP = light->position - this->position;
+//	if(length(dP) <= this->maxZ)
+//		return true;
+
+	return isSphereInView(light->position, light->radius, glm::mat4(1));
+
 }
 
 bool Camera::inView(glm::vec3 p)
