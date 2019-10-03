@@ -3,7 +3,8 @@
 in vec2 frg_UV;
 in vec3 frg_norm;
 in vec3 frg_pos;
-in float depth;
+in float w;
+in float z;
 
 layout(location = 0) out vec4 color;
 layout(location = 1) out vec4 pos;
@@ -13,7 +14,7 @@ uniform sampler2D tex;
 
 void main()
 {
-	pos = vec4(frg_pos, depth);
+	pos = vec4(frg_pos, z / w);
 	norm = frg_norm;
 	color = vec4(texture(tex, frg_UV).rgb, 0.0);
 }

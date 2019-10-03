@@ -19,8 +19,10 @@ Terrain::Terrain(std::uint32_t seed, glm::vec3 chunkSize, int groundHeight, doub
 	treeMesh = ColorMesh::loadFromFile("tree");
 	chunkTarget = std::shared_ptr<Entity>(NULL);
 	chunkLoop = true;
+	this->persistentVisible = true;
 //	std::thread chunkManagementThread(&Terrain::chunkManagementLoop, this);
 //	chunkManagementThread.detach();
+
 }
 
 Terrain::~Terrain()
@@ -38,6 +40,7 @@ void Terrain::makeChunk(double x, double z)
 std::shared_ptr<Chunk> Terrain::generateChunk(glm::vec2 pos, std::pair<double, double> point)
 {
 	std::shared_ptr<Chunk> chunk(new Chunk());
+	chunk->persistentVisible = true;
 	chunk->transform.position.x = pos.x * chunkSize.x * scale.x;
 	chunk->transform.position.z = pos.y * chunkSize.z * scale.z;
 	chunk->shader = this->shader;
@@ -355,8 +358,8 @@ bool Terrain::ground(double x, double y, double z)
 	double noisy = 0.2 * noise.octaveNoise(x, y, z, 6);
 	double fallOff = 5.0 * heightFunction(y);
 
-	double value = height + flat;// +hills;//     flat * 0.5 + hills * 0.2;// +fallOff * 0.3;
-
+	double value = noisy;// height + flat;// +hills;//     flat * 0.5 + hills * 0.2;// +fallOff * 0.3;
+	//height
 	return value < 0.0;
 }
 

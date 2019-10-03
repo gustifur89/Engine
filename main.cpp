@@ -9,13 +9,14 @@
 #include "Item.h"
 #include "Terrain.h"
 #include "Audio.h"
+#include "Toggle.h"
 
 int main()
 {
 	UIManager UI;
 	//1024 768   :   800 600
 	//"fog"  "sobel_color"
-	if (!UI.create(900, 650, "peeps out here", 120, "windowFragment2"))
+	if (!UI.create(900, 650, "peeps out here", 120, UI_SSAO, "windowFragment2"))
 	{
 		std::cout << "failed to create UI\n";
 		return -1;
@@ -256,7 +257,7 @@ int main()
 	}
 
 	//clouds
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 0; i++)
 	{
 		int cloudNum = rand() % 3 + 3;
 
@@ -342,10 +343,10 @@ int main()
 	//LIGHTING
 
 	std::shared_ptr<Light> light0 = Light::createPointLight(glm::vec3(0, 20, 0), 60.0, 50.0, glm::vec3(255,255,255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
-	UI.addLight(light0);
+	//UI.addLight(light0);
 
 	std::shared_ptr<Light> light1 = Light::createPointLight(glm::vec3(0, 40, 0), 120, 10.0, glm::vec3(255, 255, 255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
-	UI.addLight(light1);
+	//UI.addLight(light1);
 
 	glm::vec4 lightAxis(0, 1, 0, 0);
 
@@ -355,8 +356,9 @@ int main()
 	glm::mat4 rotation = glm::toMat4(glm::quat(glm::vec3(lightAngleX * TO_RAD, lightAngleY * TO_RAD, lightAngleZ * TO_RAD)));
 	lightAxis = rotation * lightAxis;
 
-	//Light::globalLightDirection = glm::vec3(lightAxis);
-	//Light::globalLightIntensity = 0.2;
+	Light::globalLightDirection = glm::vec3(lightAxis);
+	Light::globalLightIntensity = 0.2;
+	Light::ambient = 0.6;
 	
 	double shootDelay = 0.1;
 	double shootRefill = 0.0;
@@ -372,22 +374,17 @@ int main()
 
 	//std::cout << world1->children.size() << "\n";
 
+	Toggle mouseLockToggle;
+
 	do
 	{
-		if (UI.isKeyPressed(GLFW_KEY_2))
+		
+		if (mouseLockToggle.toggle(UI.isKeyPressed(GLFW_KEY_2)))
 		{
-			if (lockToggle)
-			{
-				if (UI.getMouseLockState())
-					UI.unlockMouse();
-				else
-					UI.lockMouse();
-			}
-			lockToggle = false;
-		}
-		else
-		{
-			lockToggle = true;
+			if (UI.getMouseLockState())
+				UI.unlockMouse();
+			else
+				UI.lockMouse();
 		}
 
 		if (UI.isKeyPressed(GLFW_KEY_0))

@@ -3,7 +3,8 @@
 in vec3 frg_color;
 in vec3 frg_norm;
 in vec3 frg_pos;
-in float depth;
+in float w;
+in float z;
 
 layout(location = 0) out vec4 color;
 layout(location = 1) out vec4 pos;
@@ -25,9 +26,9 @@ void main()
 	vec3 normInSpace = normalize(NM * vec4(frg_norm, 0.0)).xyz;
 	
 	color = vec4((ColorMatrix * vec4(frg_color, 1.0)).rgb, 0.0);
-	pos = vec4(frg_pos, depth); //vec4((NM * vec4(frg_pos, 1.0)).xyz, depth); depth
+	pos = vec4(frg_pos, z / w); //vec4((NM * vec4(frg_pos, 1.0)).xyz, depth); depth
 	norm = frg_norm;//normInSpace;
-
+	
 //	vec3 normInSpace = normalize(NM * vec4(frg_norm, 0.0)).xyz;
 //	
 //	float diffuse = clamp(dot(light, normInSpace), 0, 1);

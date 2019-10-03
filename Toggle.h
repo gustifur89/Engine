@@ -2,17 +2,22 @@
 class Toggle
 {
 private:
-	bool internalToggle = false;
+	bool internalToggle;
 public:
+	Toggle()
+	{
+		internalToggle = true;
+	}
+
 	bool toggle(bool condition)
 	{
 		if (condition)
 		{
 			if (internalToggle)
 			{
+				internalToggle = false;
 				return true;
 			}
-			internalToggle = false;
 		}
 		else
 		{
@@ -20,4 +25,8 @@ public:
 		}
 		return false;
 	}
+
+
+
+
 };

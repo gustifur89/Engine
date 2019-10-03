@@ -56,7 +56,7 @@ Bounds GameObject::getWorldSpaceBounds()
 void GameObject::render(Camera& camera)
 {
 	if (!this || !visible) return;
-	
+//	this->renderFunc(camera);
 	///*
 	if (mesh)
 	{
@@ -64,6 +64,10 @@ void GameObject::render(Camera& camera)
 		{
 			this->renderFunc(camera);
 		}
+	}
+	else if (this->persistentVisible)
+	{
+		this->renderFunc(camera);
 	}
 	//*/
 	//this->renderFunc(camera);

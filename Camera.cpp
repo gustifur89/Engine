@@ -34,7 +34,7 @@ glm::mat4 Camera::getTransform()
 {
 	glm::vec4 lookDirection(0,0,1, 0);	//Looking direction in viewSpace
 	//rotate by the direction
-	glm::mat4 rotationMatrix = glm::toMat4(glm::quat((float)TO_RAD * rotation));
+	glm::mat4 rotationMatrix = this->getRotation();// glm::toMat4(glm::quat((float)TO_RAD * rotation));
 	//roate the look direction by the rotation
 	lookDirection = rotationMatrix * lookDirection;
 	glm::vec3 lookAt = position + glm::vec3(lookDirection);

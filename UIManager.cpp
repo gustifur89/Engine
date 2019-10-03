@@ -40,7 +40,14 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 	glDisableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	windowShader = Shader::loadShader("windowVertex2", postProcessing);
+	std::string preprocessInstructions;
+
+	if (useShadow)
+		preprocessInstructions += "#define USE_SHADOW\n";
+	if (useSSAO)
+		preprocessInstructions += "#define USE_SSAO\n";
+
+	windowShader = Shader::loadShaderPreprocess("windowVertex2", postProcessing, preprocessInstructions);
 	clearColorLoc = windowShader->getUniformLocation("clearColor");
 	gammaLoc = windowShader->getUniformLocation("gamma");
 	exposureLoc = windowShader->getUniformLocation("exposure");
@@ -50,11 +57,17 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 	posTexLoc = windowShader->getUniformLocation("posTex");
 	normTexLoc = windowShader->getUniformLocation("normTex");
 	shadowTexLoc = windowShader->getUniformLocation("shadowMap");
+	ssaoTexLoc = windowShader->getUniformLocation("ssaoTex");
 	numShadowLoc = windowShader->getUniformLocation("numShadows");
 	wLSMLoc = windowShader->getUniformLocation("lsm");
 	gLDirLoc = windowShader->getUniformLocation("globalLightDir");
 	gLIntenLoc = windowShader->getUniformLocation("globalLightInten");
-	
+	useSSAOLoc = windowShader->getUniformLocation("useSSAO");
+	useShadowLoc = windowShader->getUniformLocation("useShadow");
+	ambientLoc = windowShader->getUniformLocation("ambient");
+	glUniform1i(useSSAOLoc, useSSAO?1:0);
+	glUniform1i(useShadowLoc, useShadow?1:0);
+	glUniform1i(numShadowLoc, 0);
 //std::cout << colTexLoc << "\n";
 //std::cout << posTexLoc << "\n";
 //std::cout << normTexLoc << "\n";
@@ -68,18 +81,42 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 	glUniform1i(colTexLoc, 0);
 	glUniform1i(posTexLoc, 1);
 	glUniform1i(normTexLoc, 2);
-	glUniform1i(shadowTexLoc, 3);
+	if(useShadow)
+		glUniform1i(shadowTexLoc, 3);
+	if(useSSAO)
+		glUniform1i(ssaoTexLoc, 4);
 
-	shadowShader = Shader::loadShader("shadow", "shadow", "shadow");// , "shadow");
-	shadowMatrixLoc = shadowShader->getUniformLocation("MV");
-	numShadowSSLoc = shadowShader->getUniformLocation("numShadows");
-	lightLoc = shadowShader->getUniformLocation("lvm");
-	//shadowShader->useShader();
-	//GLuint shadowTexLocS = shadowShader->getUniformLocation("shadowMap");
-	//glUniform1i(shadowTexLocS, 5);
+	if (useSSAO)
+	{
+		ssaoShader = Shader::loadShader("SSAO", "SSAO");
+		ssaoShader->useShader();
+		ssaoPosTexLoc = ssaoShader->getUniformLocation("posTex");
+		ssaoNormTexLoc = ssaoShader->getUniformLocation("normTex");
+		noiseTextureLoc = ssaoShader->getUniformLocation("noiseTex");
+		samplesLoc = ssaoShader->getUniformLocation("samples");
+		projectionLoc = ssaoShader->getUniformLocation("projection");
+		noiseScaleLoc = ssaoShader->getUniformLocation("noiseScale");
+		viewMatrixLoc = ssaoShader->getUniformLocation("viewMatrix");
+		glUniform1i(noiseTextureLoc, 0);
+		glUniform1i(ssaoPosTexLoc, 1);
+		glUniform1i(ssaoNormTexLoc, 2);
+	}
+
+	if (useShadow)
+	{
+		shadowShader = Shader::loadShader("shadow", "shadow", "shadow");// , "shadow");
+		shadowMatrixLoc = shadowShader->getUniformLocation("MV");
+		numShadowSSLoc = shadowShader->getUniformLocation("numShadows");
+		lightLoc = shadowShader->getUniformLocation("lvm");
+
+		//shadowShader->useShader();
+		//GLuint shadowTexLocS = shadowShader->getUniformLocation("shadowMap");
+		//glUniform1i(shadowTexLocS, 5);
+	}
+	
 }
 
-bool UIManager::create(int width, int height, std::string title, int fps, std::string postProcessing)
+bool UIManager::create(int width, int height, std::string title, int fps, unsigned int parameters, std::string postProcessing)
 {
 	this->width = width;
 	this->height = height;
@@ -87,6 +124,11 @@ bool UIManager::create(int width, int height, std::string title, int fps, std::s
 	this->aspectRatio = (double)width / height;
 	this->fps = fps;
 	this->timeDelay = 1.0 / fps;
+
+	useSSAO = (parameters & UI_SSAO) == UI_SSAO;
+	useShadow = (parameters & UI_SHADOW) == UI_SHADOW;
+
+	std::cout << "SSAO : " << useSSAO << "\n";
 
 	glewExperimental = true;
 	if (!glfwInit())
@@ -133,17 +175,22 @@ bool UIManager::create(int width, int height, std::string title, int fps, std::s
 
 	renderTexture = RenderTexture(width, height);
 
-	shadowTexture = ShadowTexture(1024, 32);
+	if(useSSAO)
+		ssaoTexture = SSAOTexture(width, height);
 
+	if (useShadow)
+	{
+		shadowTexture = ShadowTexture(1024, 32);
 
-	std::vector<GLfloat> lightSSBOData;
+		std::vector<GLfloat> lightSSBOData;
 
-	shadowsSSBOID = 0;
-	glGenBuffers(1, &shadowsSSBOID);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, shadowsSSBOID);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 0, &lightSSBOData[0], GL_DYNAMIC_COPY);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, shadowsSSBOID);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		shadowsSSBOID = 0;
+		glGenBuffers(1, &shadowsSSBOID);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, shadowsSSBOID);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, 0, &lightSSBOData[0], GL_DYNAMIC_COPY);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, shadowsSSBOID);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, renderTexture.frameBuffer);
 
@@ -308,9 +355,17 @@ void UIManager::renderWindow()
 	glBindTextureUnit(1, renderTexture.posTex);
 	glBindTextureUnit(2, renderTexture.normTex);
 //	glBindTextureUnit(3, shadowTexture.depthMap);
-	glActiveTexture(GL_TEXTURE3);
-	//glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.texID);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.depthMap);// GL_TEXTURE_2D_ARRAY   GL_TEXTURE_2D
+	
+	if (useShadow)
+	{
+		glActiveTexture(GL_TEXTURE3);
+		//glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.texID);
+
+		glBindTexture(GL_TEXTURE_2D_ARRAY, shadowTexture.depthMap);// GL_TEXTURE_2D_ARRAY   GL_TEXTURE_2D
+	}
+
+	if(useSSAO)
+		glBindTextureUnit(4, ssaoTexture.aoTexture);
 
 	updateWindowShaderUniforms();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -320,6 +375,7 @@ void UIManager::renderWindow()
 	windowShader->useShader();
 	windowShader->loadVector(gLDirLoc, Light::globalLightDirection);
 	windowShader->loadFloat(gLIntenLoc, Light::globalLightIntensity);
+	windowShader->loadFloat(ambientLoc, Light::ambient);
 	glBindVertexArray(windowVAO);
 	glEnableVertexAttribArray(0);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -327,6 +383,31 @@ void UIManager::renderWindow()
 	glBindVertexArray(0);
 
 	//windowShader->load
+}
+
+void UIManager::renderSSAO(Camera & camera)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoTexture.frameBuffer);
+	glClear(GL_COLOR_BUFFER_BIT);
+	ssaoShader->useShader();
+	glBindTextureUnit(0, ssaoTexture.noiseTexture);
+	glBindTextureUnit(1, renderTexture.posTex);
+	glBindTextureUnit(2, renderTexture.normTex);
+
+	glUniform3fv(samplesLoc, ssaoTexture.kernelSamples.size(), &ssaoTexture.kernelSamples[0]);
+	ssaoShader->loadMatrix(projectionLoc, camera.getProjection());
+	//ssaoShader->loadMatrix(projectionLoc, glm::inverse(camera.getProjection()));
+	ssaoShader->loadMatrix(viewMatrixLoc, camera.getTransform());
+	glUniform2f(noiseScaleLoc, width / 4.0, height / 4.0);
+
+	
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glBindVertexArray(windowVAO);
+	glEnableVertexAttribArray(0);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDisableVertexAttribArray(0);
+	glBindVertexArray(0);
 }
 
 void UIManager::setHDR(float gamma, float exposure)
@@ -456,29 +537,19 @@ void UIManager::display(Camera& camera)
 	//	stage->renderShadow(windowShader, shadowMatrixLoc);
 	//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowTexture.depthMapFBO);
-	glViewport(0, 0, 1024, 1024);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-
-	shadowShader->useShader();
-	
-	std::vector<std::shared_ptr<Light>> lights_ = cullLights(camera);
-
-	int numShadows = setShadowMap(camera, lights_);
-
-	glUniform1i(numShadowSSLoc, numShadows);
-	//shadowShader->loadMatrix(lightLoc, lights[0]->getProjection(0));
-	//shadowShader->loadMatrix(lightLoc, camera.getProjection() * camera.getTransform());
-
-	glCullFace(GL_FRONT);
-	//glDisable(GL_CULL_FACE);
-	stage->renderShadow(lights_, windowShader, shadowMatrixLoc);
-	//glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	if(useShadow)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowTexture.depthMapFBO);
+		glViewport(0, 0, 1024, 1024);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		shadowShader->useShader();
+		std::vector<std::shared_ptr<Light>> lights_ = cullLights(camera);
+		numShadows = setShadowMap(camera, lights_);
+		glUniform1i(numShadowSSLoc, numShadows);
+		glCullFace(GL_FRONT);
+		stage->renderShadow(lights_, windowShader, shadowMatrixLoc);
+		glCullFace(GL_BACK);
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, renderTexture.frameBuffer);
 	glViewport(0, 0, width, height);
@@ -492,16 +563,20 @@ void UIManager::display(Camera& camera)
 	//HUD->render(camera);
 
 	//render the window
+
+	if(useSSAO)	
+		renderSSAO(camera);
+
 	windowShader->useShader();
-	glUniform1i(numShadowLoc, numShadows);
-	//windowShader->loadMatrix(wLSMLoc, camera.getProjection() * camera.getTransform());
-//	windowShader->loadMatrix(wLSMLoc, lights[0]->getProjection(0));
+	if(useShadow)
+		glUniform1i(numShadowLoc, numShadows);
+
 	renderWindow();
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 
-	std::cout << (1.0 / deltaTime) << "\n";
+//	std::cout << (1.0 / deltaTime) << "\n";
 
 }
 

@@ -4,6 +4,7 @@
 
 glm::vec3 Light::globalLightDirection = glm::vec3(0, 0, 0);
 double Light::globalLightIntensity = 0.0;
+double Light::ambient = 0.0;
 
 Light::Light()
 {

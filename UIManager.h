@@ -4,12 +4,17 @@
 #include "RenderTexture.h"
 #include "Light.h"
 
+#define UI_SSAO 0b0001
+#define UI_SHADOW 0b0010
+
+
 class UIManager
 {
 protected:
 	double oldTime;
 	double oldMouseX, oldMouseY;
 	void renderWindow();
+	void renderSSAO(Camera& camera);
 	void setHDR(float gamma, float exposure);
 	std::vector<std::shared_ptr<Light>> cullLights(Camera& camera);
 	GLuint clearColorLoc;
@@ -17,27 +22,48 @@ protected:
 	GLuint exposureLoc;
 	GLuint gLDirLoc;
 	GLuint gLIntenLoc;
+	GLuint ambientLoc;
 
+
+	GLuint useSSAOLoc;
+	GLuint useShadowLoc;
 	GLuint colTexLoc;
 	GLuint posTexLoc;
 	GLuint normTexLoc;
 	GLuint shadowTexLoc;
+	GLuint ssaoTexLoc;
 	GLuint numShadowLoc;
 
 	GLuint shadowsSSBOID;
 	GLuint shadowMatrixLoc;
 	GLuint numShadowSSLoc;
 
+	GLuint ssaoPosTexLoc;
+	GLuint ssaoNormTexLoc;
+	GLuint samplesLoc;
+	GLuint projectionLoc;
+	GLuint viewMatrixLoc;
+	GLuint noiseScaleLoc;
+	GLuint noiseTextureLoc;
+	
+
 	GLuint lightLoc;
 	GLuint wLSMLoc;
 
 	float gamma;
 	float exposure;
+
+
+	bool useSSAO;
+	bool useShadow;
+	int numShadows;
+
+
 public:
 	UIManager();
 	~UIManager();
 
-	bool create(int width, int height, std::string title, int fps, std::string postProcessing = "windowFragment");
+	bool create(int width, int height, std::string title, int fps, unsigned int parameters, std::string postProcessing = "windowFragment");
 	void setUpWindowQuad(std::string postProcessing);
 
 	void initializeWindowShaderUniforms();
@@ -67,6 +93,7 @@ public:
 	//parameters
 	RenderTexture renderTexture;
 	ShadowTexture shadowTexture;
+	SSAOTexture ssaoTexture;
 	GLFWwindow* window;
 	int width, height;
 	double aspectRatio;
@@ -86,5 +113,6 @@ public:
 	GLuint renderTextureID;
 	std::shared_ptr <Shader> windowShader;
 	std::shared_ptr <Shader> shadowShader;
+	std::shared_ptr <Shader> ssaoShader;
 };
 

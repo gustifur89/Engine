@@ -7,6 +7,7 @@ class Shader
 protected:
 	void loadShader_(std::string vertexFile, std::string fragmentFile);
 	void loadShader_(std::string vertexFile, std::string fragmentFile, std::string geometryFile);
+	void loadShaderPreprocess_(std::string vertexFile, std::string fragmentFile, std::string preproccessorStuff);
 
 public:
 	Shader();
@@ -14,6 +15,7 @@ public:
 
 	static std::shared_ptr<Shader> loadShader(std::string vertexFile, std::string fragmentShader, std::string geometryShader);
 	static std::shared_ptr<Shader> loadShader(std::string vertexFile, std::string fragmentShader);
+	static std::shared_ptr<Shader> loadShaderPreprocess(std::string vertexFile, std::string fragmentFile, std::string preproccessorStuff);
 	static std::shared_ptr<Shader> loadShader(std::string fileName);
 
 	void useShader();
@@ -21,6 +23,8 @@ public:
 	GLint getUniformLocation(std::string uniformName);
 
 	void loadFloat(int location, float value);
+
+	void loadInt(int location, int value);
 
 	void loadVector(int location, glm::vec3 vector);
 

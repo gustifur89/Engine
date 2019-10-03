@@ -32,5 +32,6 @@ public:
 	Frustum viewFrustum;
 	static glm::vec3 globalLightDirection;
 	static double globalLightIntensity;
+	static double ambient;
 };
 

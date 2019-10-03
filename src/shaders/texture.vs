@@ -11,13 +11,16 @@ uniform mat4 NM;
 out vec2 frg_UV;
 out vec3 frg_norm;
 out vec3 frg_pos;
-out float depth;
+out float z;
+out float w;
 
 void main () 
 {
-	gl_Position = MVP * vec4(pos, 1);
+	vec4 tempPos = MVP * vec4(pos, 1);
+	gl_Position = tempPos;
 	frg_UV = UV;
 	frg_norm = (NM * vec4(norm, 0)).xyz;
 	frg_pos = vec3(NM * vec4(pos,1));
-	depth = (gl_Position.z - 0.1) / (100.0 - 0.1);
+	z= tempPos.z;
+	w = tempPos.w;
 }

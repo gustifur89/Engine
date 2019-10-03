@@ -1,5 +1,6 @@
 #pragma once
 #include "Headers.h"
+#include "Geometry.h"
 class RenderTexture
 {
 public:
@@ -27,5 +28,20 @@ public:
 
 	GLuint depthMap;
 	GLuint depthMapFBO;
+};
+
+class SSAOTexture
+{
+public:
+	SSAOTexture(int width, int height);
+	SSAOTexture();
+	~SSAOTexture();
+
+	//parameters
+	GLuint frameBuffer;
+	GLuint aoTexture;
+	GLuint noiseTexture;
+	std::vector<glm::vec3> ssaoKernel;
+	std::vector<GLfloat> kernelSamples;
 };
 

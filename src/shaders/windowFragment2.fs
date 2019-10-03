@@ -9,14 +9,18 @@ uniform sampler2D colTex;
 uniform sampler2D posTex;
 uniform sampler2D normTex;
 uniform sampler2DArray shadowMap; // sampler2DArray 
-
+uniform sampler2D ssaoTex;
 
 uniform int numShadows;
 
 
 uniform float gamma;
 uniform float exposure;
-
+uniform vec3 globalLightDir;
+uniform float globalLightInten;
+uniform float ambient;
+uniform int useShadow;
+uniform int useSSAO;
 uniform mat4 lsm;
 
 
@@ -92,7 +96,30 @@ float lighting(vec3 pos, vec3 norm, int indx)
 	return shadow * diffuse * iten;
 }
 
+float globalLighting(vec3 norm)
+{
+	float diffuse = clamp(dot(globalLightDir, norm), 0, 1);
+	return diffuse * globalLightInten;
+}
 
+float getAmbient()
+{
+//texture( ssaoTex, UV ).x; // 0.6
+//	vec2 texelSize = vec2(1/800,1/600);   //1.0 / vec2(textureSize(ssaoInput, 0));
+//    float result = 0.0;
+//    for (int x = -2; x < 2; ++x) 
+//    {
+//        for (int y = -2; y < 2; ++y) 
+//        {
+//            vec2 offset = vec2(float(x), float(y)) * texelSize;
+//            result += texture(ssaoTex, UV + offset).r;
+//        }
+//    }
+ //  return result / (4.0 * 4.0);
+
+//	float val = (useSSAO == 1 ? texture(ssaoTex, UV).r  : 1.0); 
+	return texture(ssaoTex, UV).r;
+}
 
 
 void main()
@@ -100,19 +127,29 @@ void main()
 	vec3 norm = texture( normTex, UV ).xyz;
 	vec4 pos = texture( posTex, UV );
 	vec4 col = texture( colTex, UV );
-	float ambient = 0.6;
-
 	float lightVal = ambient;
-
-	for(int i=0;i<numShadows;i++)
-	{
-		 lightVal += lighting(pos.xyz, norm, i);
-	}
+#ifdef USE_SSAO
+	lightVal *= getAmbient();
+#endif	
 	
+	lightVal += globalLighting(norm);
+
+#ifdef USE_SHADOW
+	if(useShadow == 1)
+	{
+		for(int i=0;i<numShadows;i++)
+		{
+			lightVal += lighting(pos.xyz, norm, i);
+		}
+	}
+#endif
+
 	//lightVal += lighting(pos.xyz, norm, 4);
     color.rgb = col.rgb * (col.a == 0 ? lightVal : 1.0);
 	color.a = 1.0;
 	
+//	color.rgb = vec3(texture( ssaoTex, UV ).x);
+
 	//float val = (texture(shadowMap,UV).r);
 	//color.rgb = vec3(val);
 
