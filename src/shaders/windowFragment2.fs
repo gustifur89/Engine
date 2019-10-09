@@ -22,6 +22,7 @@ uniform float ambient;
 uniform int useShadow;
 uniform int useSSAO;
 uniform mat4 lsm;
+uniform mat4 VSMat;
 
 
 #define LIGHT vec3(1, 1, 0)
@@ -73,10 +74,10 @@ float ShadowCalculation(vec4 fragPosLightSpace, float bias, int indx)
 
 float lighting(vec3 pos, vec3 norm, int indx)
 {
-	vec3 light_pos = lights[indx].pos;
-	float light_radius =  lights[indx].radius;
-	float light_intensity = lights[indx].intensity;
-	mat4 light_spaceMatrix = lights[indx].LightSpaceMatrix;
+	vec3 light_pos = (VSMat * vec4(lights[indx].pos, 1)).xyz;//view space
+	float light_radius =  lights[indx].radius;				
+	float light_intensity = lights[indx].intensity;			
+	mat4 light_spaceMatrix = lights[indx].LightSpaceMatrix;	//View to Light space
 
 
 	vec3 dP = light_pos - pos.xyz;
@@ -98,7 +99,7 @@ float lighting(vec3 pos, vec3 norm, int indx)
 
 float globalLighting(vec3 norm)
 {
-	float diffuse = clamp(dot(globalLightDir, norm), 0, 1);
+	float diffuse = clamp(dot((VSMat * vec4(globalLightDir,0)).xyz, norm), 0, 1);
 	return diffuse * globalLightInten;
 }
 
@@ -128,6 +129,7 @@ void main()
 	vec4 pos = texture( posTex, UV );
 	vec4 col = texture( colTex, UV );
 	float lightVal = ambient;
+
 #ifdef USE_SSAO
 	lightVal *= getAmbient();
 #endif	

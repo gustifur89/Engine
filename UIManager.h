@@ -4,8 +4,9 @@
 #include "RenderTexture.h"
 #include "Light.h"
 
-#define UI_SSAO 0b0001
-#define UI_SHADOW 0b0010
+#define UI_SSAO		0b0001
+#define UI_SHADOW	0b0010
+#define UI_SOBEL	0b0100
 
 
 class UIManager
@@ -33,6 +34,7 @@ protected:
 	GLuint shadowTexLoc;
 	GLuint ssaoTexLoc;
 	GLuint numShadowLoc;
+	GLuint VSMatLoc;
 
 	GLuint shadowsSSBOID;
 	GLuint shadowMatrixLoc;
@@ -56,6 +58,7 @@ protected:
 
 	bool useSSAO;
 	bool useShadow;
+	bool useSobel;
 	int numShadows;
 
 

@@ -65,6 +65,7 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 	useSSAOLoc = windowShader->getUniformLocation("useSSAO");
 	useShadowLoc = windowShader->getUniformLocation("useShadow");
 	ambientLoc = windowShader->getUniformLocation("ambient");
+	VSMatLoc = windowShader->getUniformLocation("VSMat");
 	glUniform1i(useSSAOLoc, useSSAO?1:0);
 	glUniform1i(useShadowLoc, useShadow?1:0);
 	glUniform1i(numShadowLoc, 0);
@@ -464,7 +465,7 @@ int UIManager::setShadowMap(Camera& camera, std::vector<std::shared_ptr<Light>> 
 			lightSSBO.push_back((float)lights_[i]->position.y);
 			lightSSBO.push_back((float)lights_[i]->position.z);
 			lightSSBO.push_back(0.0f);
-			glm::mat4 mat = lights_[i]->getProjection(j);
+			glm::mat4 mat = lights_[i]->getProjection(j) * glm::inverse(camera.getTransform());
 
 			//GLfloat * stuff = gl
 			//float * projMat = &mat[0][0];// glm::value_ptr(mat);
@@ -570,6 +571,8 @@ void UIManager::display(Camera& camera)
 	windowShader->useShader();
 	if(useShadow)
 		glUniform1i(numShadowLoc, numShadows);
+
+	windowShader->loadMatrix(VSMatLoc, camera.getTransform());
 
 	renderWindow();
 

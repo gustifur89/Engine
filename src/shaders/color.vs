@@ -18,7 +18,8 @@ void main ()
 {
 	vec4 tempPos = MVP * vec4(pos, 1);
 	gl_Position = tempPos;
-	frg_color = col;	
+	frg_color = col;
+	//NM needs to send them to View space
 	frg_norm = (NM * vec4(norm, 0)).xyz;
 	frg_pos = vec3(NM * vec4(pos,1));
 	z = tempPos.z;

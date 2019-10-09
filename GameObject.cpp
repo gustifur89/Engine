@@ -107,7 +107,10 @@ void GameObjectColor::setFillColor(int r, int g, int b)
 void GameObjectColor::renderFunc(Camera& camera)
 {
 	glm::mat4 MVPmatrix = camera.getProjection() * camera.getTransform() * transform.getTransform();
-	glm::mat4 NMmatrix = transform.getTransform();  // glm::transpose(glm::inverse(transform.getTransform()));
+	glm::mat4 NMmatrix = camera.getTransform() * transform.getTransform();  // glm::transpose(glm::inverse(transform.getTransform()));
+	
+	//IS NM is now frm mesh to view space!!
+																			
 	/*
 	//shader->put matrixes
 	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), (float) camera.aspectRatio, 0.1f, 100.0f);
@@ -162,7 +165,7 @@ GameObjectTexture::GameObjectTexture()
 void GameObjectTexture::renderFunc(Camera& camera)
 {
 	glm::mat4 MVPmatrix = camera.getProjection() * camera.getTransform() * transform.getTransform();
-	glm::mat4 NMmatrix = transform.getTransform(); 
+	glm::mat4 NMmatrix = camera.getTransform() * transform.getTransform();
 	
 	if (shader && mesh && texture)
 	{

@@ -16,7 +16,7 @@ int main()
 	UIManager UI;
 	//1024 768   :   800 600
 	//"fog"  "sobel_color"
-	if (!UI.create(900, 650, "peeps out here", 120, UI_SSAO, "windowFragment2"))
+	if (!UI.create(900, 650, "peeps out here", 120, UI_SSAO | UI_SOBEL, "windowFragment2"))
 	{
 		std::cout << "failed to create UI\n";
 		return -1;
@@ -43,7 +43,7 @@ int main()
 	std::shared_ptr<ColorMesh> cloud = ColorMesh::loadFromFile("SmoothSphere");
 	std::shared_ptr<ColorMesh> robot = ColorMesh::loadFromFile("robot");
 	std::shared_ptr<ColorMesh> mesh3 = ColorMesh::loadFromFile("land");
-	std::shared_ptr<ColorMesh> mesh4 = ColorMesh::loadFromFile("central_pillar");
+	std::shared_ptr<ColorMesh> mesh4 = ColorMesh::loadFromFile("central_pillar");//central_pillar area_model area
 	std::shared_ptr<ColorMesh> meshCrystal = ColorMesh::loadFromFile("crystal");//crystal
 	std::shared_ptr<ColorMesh> pillarMesh = ColorMesh::loadFromFile("pillar");
 	std::shared_ptr<ColorMesh> portalGun = ColorMesh::loadFromFile("portalGun");
@@ -161,6 +161,8 @@ int main()
 	std::shared_ptr<GameObjectColor> ground(new GameObjectColor);
 	ground->mesh = mesh4;
 	ground->shader = shader0;
+	ground->transform.scale = glm::vec3(4, 4, 4);
+	ground->persistentVisible = true;
 	world1->addChild(ground);
 
 	/*
@@ -482,7 +484,7 @@ int main()
 		else
 			player->updateCamera(camera, 0.9);
 
-		Holdable::move(items, noCollider);//land noCollider tree
+		Holdable::move(items, tree);//land noCollider tree
 		Portal::collide(portals, entities);
 		Portal::preRenderPortals(portals, camera);
 		Entity::entityBounds(entities);
