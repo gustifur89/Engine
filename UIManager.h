@@ -4,10 +4,10 @@
 #include "RenderTexture.h"
 #include "Light.h"
 
-#define UI_SSAO		0b0001
-#define UI_SHADOW	0b0010
-#define UI_SOBEL	0b0100
-
+#define UI_SSAO		0b0000001
+#define UI_SHADOW	0b0000010
+#define UI_SOBEL	0b0000100 //implement
+#define UI_COMIC	0b0001000
 
 class UIManager
 {
@@ -59,8 +59,10 @@ protected:
 	bool useSSAO;
 	bool useShadow;
 	bool useSobel;
+	bool useComic;
 	int numShadows;
 
+	std::shared_ptr<Texture> comicShadingTexture;
 
 public:
 	UIManager();

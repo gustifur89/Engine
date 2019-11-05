@@ -76,7 +76,14 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 //std::cout << numShadowLoc << "\n";
 //std::cout << wLSMLoc << "\n";
 	
-	
+	if (useComic)
+	{
+		comicShadingTexture = Texture::loadFromFile("Comic_shade_0.png");
+
+
+	}
+
+
 	
 	windowShader->useShader();
 	glUniform1i(colTexLoc, 0);
@@ -128,8 +135,8 @@ bool UIManager::create(int width, int height, std::string title, int fps, unsign
 
 	useSSAO = (parameters & UI_SSAO) == UI_SSAO;
 	useShadow = (parameters & UI_SHADOW) == UI_SHADOW;
-
-	std::cout << "SSAO : " << useSSAO << "\n";
+	useSobel = (parameters & UI_SOBEL) == UI_SOBEL;
+	useComic = (parameters & UI_COMIC) == UI_COMIC;
 
 	glewExperimental = true;
 	if (!glfwInit())
