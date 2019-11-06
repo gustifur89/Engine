@@ -51,6 +51,9 @@ void Portal::renderFunc(Camera& camera)
 		glm::mat4 NMmatrix = camera.getProjection();// *glm::mat4(rotation);// camera.getTransform();// *transform.getTransform();// *rotation;// *transform.getTransform() * scale;// transform.getScale();// camera.getRotation() * camera.getScale() * transform.getRotation() * transform.getScale();// camera.getTransform() * scale;
 		
 		glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
+		glBindTextureUnit(3, renderTexture.colTex);
+		glBindTextureUnit(4, renderTexture.posTex);
+		glBindTextureUnit(5, renderTexture.normTex);
 		shader->useShader();
 		shader->setLightInternal(shader->light);
 		shader->setMatrixes(MVPmatrix, NMmatrix, colorMatrix);
@@ -97,7 +100,10 @@ void Portal::portalRender(Camera camera)
 
 	portalCamera.rotation = camera.rotation;
 
-	glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
+	//glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
+//	glBindTextureUnit(0, renderTexture.colTex);
+//	glBindTextureUnit(1, renderTexture.posTex);
+//	glBindTextureUnit(2, renderTexture.normTex);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderTexture.frameBuffer);
 	glViewport(0, 0, PORTAL_TEXTURE_SIZE, PORTAL_TEXTURE_SIZE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -122,6 +128,17 @@ void Portal::linkPortals(std::shared_ptr<Portal> portal1, std::shared_ptr<Portal
 {
 	portal1->otherPortal = portal2;
 	portal2->otherPortal = portal1;
+}
+
+void Portal::setUpShader(std::shared_ptr<ColorShader> shader)
+{
+	shader->useShader();
+	GLuint colTexLoc = shader->getUniformLocation("colTex");
+	GLuint posTexLoc = shader->getUniformLocation("posTex");
+	GLuint normTexLoc = shader->getUniformLocation("normTex");
+	glUniform1i(colTexLoc, 3);
+	glUniform1i(posTexLoc, 4);
+	glUniform1i(normTexLoc, 5);
 }
 
 void Portal::collideInternal(std::shared_ptr<Entity> entity)

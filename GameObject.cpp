@@ -64,10 +64,11 @@ void GameObject::render(Camera& camera)
 		{
 			this->renderFunc(camera);
 		}
-	}
-	else if (this->persistentVisible)
-	{
-		this->renderFunc(camera);
+		else if (this->persistentVisible)
+		{
+		//	std::cout << " Draw\n";
+			this->renderFunc(camera);
+		}
 	}
 	//*/
 	//this->renderFunc(camera);

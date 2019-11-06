@@ -4,6 +4,8 @@
 #include "RenderTexture.h"
 #include "Light.h"
 
+//#define PRINT_FPS
+
 #define UI_SSAO		0b0000001
 #define UI_SHADOW	0b0000010
 #define UI_SOBEL	0b0000100 //implement
@@ -24,6 +26,7 @@ protected:
 	GLuint gLDirLoc;
 	GLuint gLIntenLoc;
 	GLuint ambientLoc;
+	GLuint windowScaleLoc;
 
 
 	GLuint useSSAOLoc;
@@ -63,6 +66,11 @@ protected:
 	int numShadows;
 
 	std::shared_ptr<Texture> comicShadingTexture;
+
+	std::vector<double> frameRates;
+	int maxAvg = 10;
+	int curFrame = 0;
+	
 
 public:
 	UIManager();

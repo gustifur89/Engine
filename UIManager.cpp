@@ -8,6 +8,7 @@ UIManager::UIManager()
 	oldTime = 0.0;
 	deltaTime = 0.0;
 	mouseLockedState = false;
+	frameRates = std::vector<double>(maxAvg);
 }
 
 void UIManager::setUpWindowQuad(std::string postProcessing)
@@ -46,6 +47,8 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 		preprocessInstructions += "#define USE_SHADOW\n";
 	if (useSSAO)
 		preprocessInstructions += "#define USE_SSAO\n";
+	if (useSobel)
+		preprocessInstructions += "#define USE_SOBEL\n";
 
 	windowShader = Shader::loadShaderPreprocess("windowVertex2", postProcessing, preprocessInstructions);
 	clearColorLoc = windowShader->getUniformLocation("clearColor");
@@ -66,6 +69,9 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 	useShadowLoc = windowShader->getUniformLocation("useShadow");
 	ambientLoc = windowShader->getUniformLocation("ambient");
 	VSMatLoc = windowShader->getUniformLocation("VSMat");
+	windowScaleLoc = windowShader->getUniformLocation("windowScale");
+	windowShader->useShader();
+	glUniform2f(windowScaleLoc, (float) 1.0 / width, (float) 1.0 / height);
 	glUniform1i(useSSAOLoc, useSSAO?1:0);
 	glUniform1i(useShadowLoc, useShadow?1:0);
 	glUniform1i(numShadowLoc, 0);
@@ -93,6 +99,36 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 		glUniform1i(shadowTexLoc, 3);
 	if(useSSAO)
 		glUniform1i(ssaoTexLoc, 4);
+	if (useSobel)
+	{
+		GLint matX = glGetUniformLocation(windowShader->programID, "conMatX");
+		GLint matY = glGetUniformLocation(windowShader->programID, "conMatY");
+
+		float sobelX_array[9] =
+		{
+			-1, 0, 1,
+			-2, 0, 2,
+			-1, 0, 1
+		};
+		float sobelY_array[9] =
+		{
+			-1, -2, -1,
+			 0,  0,  0,
+			 1,  2,  1
+		};
+
+		glm::mat3 conMatX = glm::mat3(-1, -2, -1,
+			0, 0, 0,
+			1, 2, 1);
+
+		glm::mat3 conMatY = glm::mat3(-1, 0, 1,
+			-2, 0, 2,
+			-1, 0, 1);
+
+		windowShader->useShader();
+		windowShader->loadMatrix(matX, conMatX);
+		windowShader->loadMatrix(matY, conMatY);
+	}
 
 	if (useSSAO)
 	{
@@ -211,6 +247,7 @@ bool UIManager::create(int width, int height, std::string title, int fps, unsign
 
 void UIManager::initializeWindowShaderUniforms()
 {
+	/*
 	GLint matX = glGetUniformLocation(windowShader->programID, "convolutionMatrixX");
 	GLint matY = glGetUniformLocation(windowShader->programID, "convolutionMatrixY");
 
@@ -240,6 +277,7 @@ void UIManager::initializeWindowShaderUniforms()
 	windowShader->useShader();
 	windowShader->loadMatrix(matX, conMatX);
 	windowShader->loadMatrix(matY, conMatY);
+	*/
 }
 
 void UIManager::updateWindowShaderUniforms()
@@ -467,7 +505,7 @@ int UIManager::setShadowMap(Camera& camera, std::vector<std::shared_ptr<Light>> 
 		for (int j = 0; j < lights_[i]->projectionMatrix.size(); j++)
 		{
 			numShadows++;
-			//lightSSBO
+
 			lightSSBO.push_back((float)lights_[i]->position.x);
 			lightSSBO.push_back((float)lights_[i]->position.y);
 			lightSSBO.push_back((float)lights_[i]->position.z);
@@ -587,7 +625,20 @@ void UIManager::display(Camera& camera)
 	glfwPollEvents();
 
 //	std::cout << (1.0 / deltaTime) << "\n";
-
+#ifdef PRINT_FPS
+	curFrame++;
+	if (curFrame >= maxAvg)
+	{
+		double avg = 0.0;
+		for (int i = 0; i < maxAvg; i++)
+		{
+			avg += frameRates[i];
+		}
+		std::cout << (avg / maxAvg) << "\n";
+		curFrame = 0;
+	}
+	frameRates[curFrame] = (1.0 / deltaTime);
+#endif
 }
 
 UIManager::~UIManager()

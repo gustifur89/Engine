@@ -203,18 +203,20 @@ SSAOTexture::SSAOTexture(int width, int height)
 	///Random noise texture
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 - 1.0
 	std::default_random_engine generator;
-	for (unsigned int i = 0; i < 32; ++i)
+	double sampleSize = 16;
+	for (unsigned int i = 0; i < sampleSize; ++i)
 	{
 		glm::vec3 sample(
 			randomFloats(generator) * 2.0 - 1.0,
 			randomFloats(generator) * 2.0 - 1.0,
+			1
 			//randomFloats(generator) * 2.0 - 1.0
-			randomFloats(generator) * 1.2 - 0.2
+			//randomFloats(generator) * 1.2 - 0.2
 			//randomFloats(generator)
 		);
 		sample = glm::normalize(sample);
 		sample *= randomFloats(generator);
-		float scale = (float)i / 64.0;
+		float scale = (float)i / sampleSize;
 	//	scale = Geometry::lerp(0.1f, 1.0f, scale * scale);
 		sample *= scale;
 		ssaoKernel.push_back(sample);

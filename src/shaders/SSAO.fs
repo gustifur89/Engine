@@ -14,7 +14,7 @@ uniform mat4 viewMatrix;
 
 uniform vec2 noiseScale;
 
-const int kernelSize = 32;
+const int kernelSize = 16;
 const float radius = 1.0;//1.5
 const float bias = 0.06;
 
@@ -29,10 +29,11 @@ void main()
 	mat3 TBN       = mat3(tangent, bitangent, normal);  
 	
 	float occlusion = 0.0;
-	for(int i = 0; i < kernelSize; ++i)
+	for(int i = 0; i < 16; ++i)
 	{
 	    // get sample position
-	    vec3 samp = TBN * samples[i]; // From tangent to view-space
+	   vec3 samp = TBN * samples[i]; // From tangent to view-space
+	   // vec3 samp = samples[i]; // From tangent to view-space
 	    samp = fragPos + samp * radius; 
 	    	   
 		vec4 offset = vec4(samp, 1.0);
@@ -47,7 +48,7 @@ void main()
 		occlusion += (sampleDepth >= samp.z + bias ? 1.0 : 0.0) * rangeCheck;   
 	}  
 	
-	occlusion = 1.0 - (occlusion / kernelSize);
+	occlusion = 1.0 - (occlusion / 16);
 	ao = occlusion;  
 
 }

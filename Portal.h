@@ -27,6 +27,7 @@ public:
 	static void collide(std::vector<std::shared_ptr<Portal>> portals, std::shared_ptr<Entity> entity);
 	static void collide(std::vector<std::shared_ptr<Portal>> portals, std::vector<std::shared_ptr<Entity>> entities);
 	static void linkPortals(std::shared_ptr<Portal> portal1, std::shared_ptr<Portal> portal2);
+	static void setUpShader(std::shared_ptr<ColorShader> shader);
 	//parameters
 	std::shared_ptr<Portal> otherPortal;
 	std::shared_ptr<GameObject> world;
