@@ -2,20 +2,25 @@
 
 // ================================== Entity ===========================================
 
-Entity::Entity(double radius, std::shared_ptr<Mesh> mesh, UIManager * UI, bool slidable)
+Entity::Entity(float radius, std::shared_ptr<Mesh> mesh, UIManager * UI, bool slidable)
 {
-	collider.radius = radius;
-	collider.position = &this->transform.position;
-	collider.vel = &this->vel;
+//	collider = std::shared_ptr<Collider>(new Collider(radius));
+//	collider->transform.position = this->transform.position;
+//	collider->velocity = this->vel;
 	this->mesh = mesh;
 	lookRotation = glm::vec3(0.0);
 	this->UI = UI;
 	this->slidable = slidable;
+	this->testName = 0;
+	this->radius = radius;
 }
+
 
 Entity::~Entity()
 {
+	std::cout << "bye entity\n";
 }
+
 
 double Entity::dotFace(std::shared_ptr<Triangle> face)
 {
@@ -53,6 +58,7 @@ std::shared_ptr<Triangle> Entity::getFace(std::vector<std::shared_ptr<Triangle>>
 
 void Entity::move(std::shared_ptr<CollisionStructure> collisionStructure)
 {
+	/*  DEFUNCT
 	colliding = false;
 	floorColliding = false;
 //	if (glm::length(vel) > Settings::maxSpeed)
@@ -71,7 +77,7 @@ void Entity::move(std::shared_ptr<CollisionStructure> collisionStructure)
 	{
 		transform.position += fracMove;
 		if (collisionStructure == nullptr) continue;
-		std::vector<std::shared_ptr<Triangle>> faces = collisionStructure->collide(&collider);
+		std::vector<std::shared_ptr<Triangle>> faces = collisionStructure->collide(collider);
 		faces = getColliableFaces(faces);
 	//	std::cout << faces.size() << "\n";
 		if (faces.size() > 0)
@@ -91,7 +97,7 @@ void Entity::move(std::shared_ptr<CollisionStructure> collisionStructure)
 				glm::vec3 perp = moveRest - (glm::dot(moveRest, face->normal) / glm::length(face->normal)) * face->normal;
 
 				transform.position += perp;
-				faces = collisionStructure->collide(&collider);
+				faces = collisionStructure->collide(collider);
 				faces = getColliableFaces(faces);
 				if (faces.size() > 0)
 				{
@@ -103,13 +109,14 @@ void Entity::move(std::shared_ptr<CollisionStructure> collisionStructure)
 		}
 		
 	}
+	*/
 }
 
 void Entity::updateCamera(Camera & camera, double upPercent)
 {
 	camera.rotation = lookRotation;
-	camera.position = transform.position;
-	camera.position.y += collider.radius * upPercent;
+	camera.position = PhysicsBody::transform.position;
+	//camera.position.y += collider->radius * upPercent;
 }
 
 void Entity::entityBounds(std::vector<std::shared_ptr<Entity>> entities)
@@ -122,6 +129,60 @@ void Entity::entityBounds(std::vector<std::shared_ptr<Entity>> entities)
 	}
 }
 
+void Entity::setScale(glm::vec3 scale)
+{
+	PhysicsBody::transform.scale = scale;
+	GameObjectColor::transform.scale = scale;
+}
+
+glm::vec3 Entity::getScale()
+{
+	return PhysicsBody::transform.scale;
+}
+
+void Entity::setPosition(glm::vec3 position)
+{
+	PhysicsBody::transform.position = position;
+	GameObjectColor::transform.position = position;
+}
+
+glm::vec3 Entity::getPosition()
+{
+	return PhysicsBody::transform.position;
+}
+
+void Entity::setRotation(glm::vec3 rotation)
+{
+	PhysicsBody::transform.rotation = rotation;
+	GameObjectColor::transform.rotation = rotation;
+}
+
+glm::vec3 Entity::getRotation()
+{
+	return PhysicsBody::transform.rotation;
+}
+
+void Entity::setTransform(Transform transform)
+{
+	PhysicsBody::transform = transform;
+	GameObjectColor::transform = transform;
+}
+
+Transform Entity::getTransform()
+{
+	return PhysicsBody::transform;
+}
+
+void Entity::move()
+{
+	GameObject::transform = PhysicsBody::transform;
+}
+
+void Entity::renderFunc(Camera& camera)
+{
+	GameObject::transform = PhysicsBody::transform;
+	GameObjectColor::renderFunc(camera);
+}
 
 // ================================ Holdabale ========================
 
@@ -165,11 +226,11 @@ void Holdable::setTransform(Transform transform)
 
 //	glm::mat3 POS = glm::mat3(X,Y,Z);
 
-	this->transform.position.x = transform.position.x + X.x * relative.position.x + Y.x * relative.position.y + Z.x * relative.position.z;
-	this->transform.position.y = transform.position.y + X.y * relative.position.x + Y.y * relative.position.y + Z.y * relative.position.z;
-	this->transform.position.z = transform.position.z + X.z * relative.position.x + Y.z * relative.position.y + Z.z * relative.position.z;
+	this->PhysicsBody::transform.position.x = transform.position.x + X.x * relative.position.x + Y.x * relative.position.y + Z.x * relative.position.z;
+	this->PhysicsBody::transform.position.y = transform.position.y + X.y * relative.position.x + Y.y * relative.position.y + Z.y * relative.position.z;
+	this->PhysicsBody::transform.position.z = transform.position.z + X.z * relative.position.x + Y.z * relative.position.y + Z.z * relative.position.z;
 
-	this->transform.rotation += relative.rotation;
+	this->PhysicsBody::transform.rotation += relative.rotation;
 }
 
 void Holdable::move(std::vector<std::shared_ptr<Holdable>> items, std::shared_ptr<CollisionStructure> collisionStructure)
@@ -182,7 +243,6 @@ void Holdable::move(std::vector<std::shared_ptr<Holdable>> items, std::shared_pt
 
 
 // ================================= Player ==============================================
-
 
 Player::Player(double radius, std::shared_ptr<Mesh> mesh, UIManager * UI) : Entity(radius, mesh, UI, true)
 {
@@ -206,19 +266,17 @@ void Player::interact(std::shared_ptr<Holdable> item)
 	bool q = UI->isKeyPressed(GLFW_KEY_Q);
 	if (e || q)
 	{
-		glm::vec3 pPos = *collider.position;
-		glm::vec3 iPos = *item->collider.position;
-		if (glm::length(pPos - iPos) <= collider.radius + item->collider.radius)
+		if (glm::length(PhysicsBody::transform.position - item->PhysicsBody::transform.position) <= this->radius + item->radius)
 		{
 			if (e)
 			{
 				//pick up
-
+		
 			}
 			if(q)
 			{
 				//drop
-
+		
 			}
 		}
 	}
@@ -293,6 +351,12 @@ void Player::move(std::shared_ptr<CollisionStructure> collisionStructure)
 		verticalSpeed *= 2.0;
 	}
 
+	if (UI->isKeyPressed(GLFW_KEY_1))
+	{
+		this->floorColliding = false;
+		this->roofColliding = false;
+	}
+
 	//LOOK
 	if (UI->getMouseLockState()) {
 		double deltaPitch = UI->deltaMouseY * Settings::mouseSensitivity;
@@ -357,13 +421,162 @@ void Player::move(std::shared_ptr<CollisionStructure> collisionStructure)
 
 	if (UI->isKeyPressed(GLFW_KEY_3))
 	{
-		transform.position = glm::vec3(10.0);
+		PhysicsBody::transform.position = glm::vec3(10.0);
 	}
 
 	Entity::move(collisionStructure);
 
 	if (held != nullptr)
 	{
-		held->setTransform(transform);
+		held->setTransform(PhysicsBody::transform);
+	}
+
+	//update for rendering
+	GameObject::transform = PhysicsBody::transform;
+}
+
+void Player::move()
+{
+	if (UI->isKeyPressed(GLFW_KEY_V))
+	{
+		if (noClipToggle)
+		{
+			noClip = !noClip;
+		}
+		noClipToggle = false;
+	}
+	else
+	{
+		noClipToggle = true;
+	}
+
+	bool w = UI->isKeyPressed(GLFW_KEY_W);
+	bool s = UI->isKeyPressed(GLFW_KEY_S);
+	bool a = UI->isKeyPressed(GLFW_KEY_A);
+	bool d = UI->isKeyPressed(GLFW_KEY_D);
+
+	bool e = UI->isKeyPressed(GLFW_KEY_SPACE);
+	bool q = UI->isKeyPressed(GLFW_KEY_LEFT_CONTROL);
+
+	bool up = UI->isKeyPressed(GLFW_KEY_UP);
+	bool down = UI->isKeyPressed(GLFW_KEY_DOWN);
+	bool right = UI->isKeyPressed(GLFW_KEY_RIGHT);
+	bool left = UI->isKeyPressed(GLFW_KEY_LEFT);
+
+	double forwardSpeed = 0.0;
+	double strafeSpeed = 0.0;
+	double verticalSpeed = 0.0;
+
+	//MOVEMENT
+	if (w == s)
+		forwardSpeed = 0.0;
+	else if (w)
+		forwardSpeed = 10.0;// *UI->deltaTime;
+	else
+		forwardSpeed = -10.0;// *UI->deltaTime;
+
+	if (a == d)
+		strafeSpeed = 0.0;
+	else if (a)
+		strafeSpeed = 10.0;// *UI->deltaTime;
+	else
+		strafeSpeed = -10.0;// *UI->deltaTime;
+
+	if (e == q)
+		verticalSpeed = 0.0;
+	else if (q)
+		verticalSpeed = -10.0;// *UI->deltaTime;
+	else
+		verticalSpeed = 10.0;// *UI->deltaTime;
+
+	if (UI->isKeyPressed(GLFW_KEY_LEFT_SHIFT))
+	{
+		forwardSpeed *= 2.0;
+		strafeSpeed *= 2.0;
+		verticalSpeed *= 2.0;
+	}
+
+	if (UI->isKeyPressed(GLFW_KEY_1))
+	{
+		this->floorColliding = false;
+		this->roofColliding = false;
+	}
+
+	//LOOK
+	if (UI->getMouseLockState()) {
+		double deltaPitch = UI->deltaMouseY * Settings::mouseSensitivity;
+		double deltaPivot = -UI->deltaMouseX * Settings::mouseSensitivity;
+		lookRotation.x += deltaPitch;
+		lookRotation.y += deltaPivot;
+		if (lookRotation.x > 89.9) lookRotation.x = 89.9;
+		if (lookRotation.x < -89.9) lookRotation.x = -89.9;
+	}
+
+	glm::vec3 directionForward = Transform::getTransformedZ(lookRotation);
+	glm::vec3 directionStrafe = Transform::getTransformedX(lookRotation);
+	glm::vec3 directionVertical = Transform::getTransformedY(lookRotation);
+
+	if (noClip)
+	{
+		vel = (float)forwardSpeed * directionForward + (float)strafeSpeed * directionStrafe + (float)verticalSpeed * directionVertical;
+		this->velocity = vel;
+	}
+	else
+	{
+
+		
+		if (floorColliding)
+		{
+			onGroundTime = 0.0;
+			hasJump = true;
+		}
+		if (roofColliding)
+		{
+			
+		}
+
+		if (hasJump && onGroundTime <= Settings::onGroundTimeMax)
+		{
+			
+			onGroundTime += UI->deltaTime;
+		}
+
+		if (jumpToggle.toggle(UI->isKeyPressed(GLFW_KEY_SPACE)))
+		{
+			this->applyImpulse(glm::vec3(0, 10, 0), glm::vec3(0));
+			if (hasJump)
+				jumpTime = 0.0;
+			hasJump = false;
+			if (jumpTime <= jumpTimeMax)
+			{
+				jumpTime += UI->deltaTime;
+			}
+		}
+		else
+		{
+			jumpTime = jumpTimeMax + 1.0;
+		}
+
+
+		vel.z = cos(lookRotation.y * TO_RAD) * forwardSpeed - sin(lookRotation.y * TO_RAD) * strafeSpeed;
+		vel.x = sin(lookRotation.y * TO_RAD) * forwardSpeed + cos(lookRotation.y * TO_RAD) * strafeSpeed;
+
+		this->velocity.x = vel.x;
+		this->velocity.z = vel.z;
+	}
+
+	//std::cout << collisionStructure.collide(collider).size() << "\n";
+
+	if (UI->isKeyPressed(GLFW_KEY_3))
+	{
+		PhysicsBody::transform.position = glm::vec3(0, 10.0, 0);
+	}
+
+	//Entity::move(collisionStructure);
+
+	if (held != nullptr)
+	{
+		held->setTransform(PhysicsBody::transform);
 	}
 }
+

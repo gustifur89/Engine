@@ -19,6 +19,15 @@ public:
 	static glm::vec3 getTransformedY(glm::vec3 angles);
 	static glm::vec3 getTransformedZ(glm::vec3 angles);
 
+	inline Transform operator+(const Transform& other)
+	{
+		Transform out;
+		out.position = this->position + other.position;
+		out.rotation = this->rotation + other.rotation;
+		out.scale = this->scale + other.scale;
+		return out;
+	}
+
 //	glm::vec3 getPosition();
 	//parameters
 //	double x, y, z;

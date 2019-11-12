@@ -6,7 +6,6 @@
 #include "Entity.h"
 #include "CollisionStructure.h"
 
-
 class Chunk : public GameObjectColor
 {
 public:
@@ -45,6 +44,7 @@ public:
 	std::shared_ptr<ColorMesh> treeMesh;
 	std::shared_ptr<Entity> chunkTarget;
 	std::map<std::pair<double,double>, std::shared_ptr<Chunk>> chunkMap;
+	bool flatTop;
 
 	//methods
 
@@ -59,9 +59,10 @@ public:
 	void renderFunc(Camera& camera);
 	void setTarget(std::shared_ptr<Entity> ent);
 	bool ground(double x, double y, double z);
+	double ground(double x, double z);
 	void closeThread();
 	void chunkManagement();
-	std::vector<std::shared_ptr<Triangle>> collide(Collider * collider);
+	std::vector<std::shared_ptr<Triangle>> collide(std::shared_ptr<Collider> collider);
 
 };
 

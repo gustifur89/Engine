@@ -209,7 +209,9 @@ SSAOTexture::SSAOTexture(int width, int height)
 		glm::vec3 sample(
 			randomFloats(generator) * 2.0 - 1.0,
 			randomFloats(generator) * 2.0 - 1.0,
-			1
+			randomFloats(generator) * 2.0 - 1.0
+			//1
+		
 			//randomFloats(generator) * 2.0 - 1.0
 			//randomFloats(generator) * 1.2 - 0.2
 			//randomFloats(generator)

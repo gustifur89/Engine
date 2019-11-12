@@ -1,11 +1,199 @@
 #include "CollisionStructure.h"
 
+//============================== Collider ==========================================
+
+Collider::Collider() : Collider(0.0)
+{
+
+}
+
+Collider::Collider(float radius)
+{
+//	self = std::shared_ptr<Collider>(this);
+	physicsBody = std::shared_ptr<PhysicsBody>(NULL);
+	locked = true;
+	this->radius = radius;
+	velocity = glm::vec3(0);
+	colliderType = 0;
+}
+
+Collider::~Collider()
+{
+	//self = std::shared_ptr<Collider>(NULL);
+}
+
+void Collider::update(glm::mat4& localToWorld, glm::vec3& velocity, bool locked)
+{
+	this->transform.position = localToWorld * relPos; //physicsBody->transform.position + glm::vec3(relPos);
+	this->velocity = velocity;
+	this->locked = locked;
+}
+
+void Collider::collision(std::shared_ptr<Collider> collider, std::stack<Collision>& collisions)
+{
+	if (this->colliderType != 0 && this->colliderType == collider->colliderType) return;
+
+	float distance = glm::length(this->transform.position - collider->transform.position);
+
+	if (distance <= 0.001) return;
+
+	if (distance <= this->radius + collider->radius)
+	{
+		float lockedCorrection = (this->locked | collider->locked) ? 1.0f : 0.5f;
+
+		float rectify = (this->radius + collider->radius) - distance;
+
+		glm::vec3 relVelocity = this->velocity - collider->velocity;
+
+		//position is the center. Normal is the direction from the other ball to this ball
+		glm::vec3 normal = glm::normalize(this->transform.position - collider->transform.position);
+		glm::vec3 position = 0.5f * (this->transform.position + collider->transform.position);
+
+		//get component of velocity parallel to the normal
+
+		/*
+		glm::vec3 diff = glm::vec3(0);// this->transform.position;//this->transform.position + this->radius * normal -collider->transform.position - this->radius * normal;
+
+
+		float dot = glm::dot(normal, relVelocity);
+		glm::vec3 projVelocity = dot < 0 ? dot * normal : glm::vec3(0);
+
+		//impulse should cancel the velocity into the object and offset back out of object
+		glm::vec3 rectifyingDistance = rectify * normal;
+		*/
+	//	this->physicsBody->applyImpulse(bothOffset * (-projVelocity + rectifyingDistance), glm::vec3(0, 0, 0));
+
+		//Collision nCollision(position, normal, this->physicsBody);
+		//nCollision.impulse = bothOffset * (-projVelocity + rectifyingDistance);
+		Collision nCollision(position, normal, relVelocity, rectify, lockedCorrection, this->physicsBody);
+		collisions.push(nCollision);
+
+		//if(!this->locked)
+		//	this->physicsBody->applyImpulse(bothOffset * (-projVelocity + -rectifyingDistance), glm::vec3(0, 0, 0));
+
+
+		//if (!this->locked)
+		//	collider->physicsBody->applyImpulse(bothOffset * (projVelocity + rectifyingDistance), glm::vec3(0, 0, 0));
+	}
+}
+
+void Collider::collision(std::shared_ptr<Collider> collider)
+{
+	//forgo AABB test
+	//just a simple sphere collision test:
+	float distance = glm::length(this->transform.position - collider->transform.position);
+
+	if (distance <= this->radius + collider->radius)
+	{
+		float bothOffset = (this->locked | collider->locked) ? 1.0f : 0.5f;
+
+		float rectify = (this->radius + collider->radius) - distance;
+
+		glm::vec3 relVelocity = this->velocity - collider->velocity;
+
+		//position is the center. Normal is the direction from the other ball to this ball
+		glm::vec3 normal = glm::normalize(this->transform.position - collider->transform.position);
+		glm::vec3 position = 0.5f * (this->transform.position + collider->transform.position);
+
+		//get component of velocity parallel to the normal
+
+		glm::vec3 diff = glm::vec3(0);// this->transform.position;//this->transform.position + this->radius * normal -collider->transform.position - this->radius * normal;
+
+		float dot = glm::dot(normal, relVelocity);
+		glm::vec3 projVelocity = dot < 0 ? dot * normal : glm::vec3(0);
+
+		//impulse should cancel the velocity into the object and offset back out of object
+		glm::vec3 rectifyingDistance = rectify* normal;
+
+		this->physicsBody->applyImpulse( bothOffset * (-projVelocity + rectifyingDistance), glm::vec3(0, 0, 0));
+
+		//if(!this->locked)
+		//	this->physicsBody->applyImpulse(bothOffset * (-projVelocity + -rectifyingDistance), glm::vec3(0, 0, 0));
+		
+		
+		//if (!this->locked)
+		//	collider->physicsBody->applyImpulse(bothOffset * (projVelocity + rectifyingDistance), glm::vec3(0, 0, 0));
+	}
+}
+
+void Collider::collision(std::shared_ptr<CollisionStructure> collisionStructure, std::stack<Collision>& collisions)
+{
+	std::vector<std::shared_ptr<Triangle>> faces = collisionStructure->collide(shared_from_this());//self
+	//std::cout << faces.size() << "\n";
+	std::stack<Collision> tempStack;
+	for (int i = 0; i < faces.size(); i++)
+	{
+		this->collision(faces[i], tempStack);
+	}
+
+	//Now we need to do grahm-schmidt on the results to avoid double counting and stuff. It caused errors where balls would just bounce off of meshes.
+
+
+
+
+	/*
+	float distance = glm::length(this->transform.position - collider->transform.position);
+
+	if (distance <= this->radius + collider->radius)
+	{
+		float bothOffset = (this->locked | collider->locked) ? 1.0f : 0.5f;
+
+		float rectify = (this->radius + collider->radius) - distance;
+
+		glm::vec3 relVelocity = this->velocity - collider->velocity;
+
+		//position is the center. Normal is the direction from the other ball to this ball
+		glm::vec3 normal = glm::normalize(this->transform.position - collider->transform.position);
+		glm::vec3 position = 0.5f * (this->transform.position + collider->transform.position);
+
+		//get component of velocity parallel to the normal
+
+		glm::vec3 diff = glm::vec3(0);// this->transform.position;//this->transform.position + this->radius * normal -collider->transform.position - this->radius * normal;
+
+		float dot = glm::dot(normal, relVelocity);
+		glm::vec3 projVelocity = dot < 0 ? dot * normal : glm::vec3(0);
+
+		//impulse should cancel the velocity into the object and offset back out of object
+		glm::vec3 rectifyingDistance = rectify * normal;
+
+		this->physicsBody->applyImpulse(bothOffset * (-projVelocity + rectifyingDistance), glm::vec3(0, 0, 0));
+	}
+	*/
+}
+
+void Collider::collision(std::shared_ptr<Triangle> triangle, std::stack<Collision>& collisions)
+{
+	float distance = OctTree::distanceToTriangle(shared_from_this(), triangle);//self
+
+	float rectify = (this->radius) - distance;
+
+	glm::vec3 relVelocity = this->velocity;
+
+	//position is the center. Normal is the direction from the other ball to this ball
+	glm::vec3 normal = triangle->normal;
+	glm::vec3 position = this->transform.position - distance * normal;
+
+	/*
+	float dot = glm::dot(normal, relVelocity);
+	glm::vec3 projVelocity = dot < 0 ? dot * normal : glm::vec3(0);
+
+	//impulse should cancel the velocity into the object and offset back out of object
+	glm::vec3 rectifyingDistance = rectify * normal;
+
+	//	this->physicsBody->applyImpulse(bothOffset * (-projVelocity + rectifyingDistance), glm::vec3(0, 0, 0));
+	*/
+
+	//Collision nCollision(position, normal, this->physicsBody);
+	Collision nCollision(position, normal, relVelocity, rectify, 1.0f, this->physicsBody);
+	//nCollision.impulse = (-projVelocity + rectifyingDistance);
+	collisions.push(nCollision);
+}
+
 //============================== CollisionStructure ================================
 
 CollisionStructure::CollisionStructure()
 {
 }
-
 
 CollisionStructure::~CollisionStructure()
 {
@@ -119,7 +307,7 @@ OctTree::~OctTree()
 //	delete root;
 }
 
-bool OctTree::boundingBox(Collider *collider, std::shared_ptr<Triangle> triangle)
+bool OctTree::boundingBox(std::shared_ptr<Collider> collider, std::shared_ptr<Triangle> triangle)
 {
 	double maxX = fmax(triangle->p1.x, fmax(triangle->p2.x, triangle->p3.x));
 	double minX = fmin(triangle->p1.x, fmin(triangle->p2.x, triangle->p3.x));
@@ -127,15 +315,15 @@ bool OctTree::boundingBox(Collider *collider, std::shared_ptr<Triangle> triangle
 	double minY = fmin(triangle->p1.y, fmin(triangle->p2.y, triangle->p3.y));
 	double maxZ = fmax(triangle->p1.z, fmax(triangle->p2.z, triangle->p3.z));
 	double minZ = fmin(triangle->p1.z, fmin(triangle->p2.z, triangle->p3.z));
-	double radius = 1.0;
-	if (maxX >= collider->position->x - radius && minX <= collider->position->x + radius && maxY >= collider->position->y - radius && minY <= collider->position->y + radius && maxZ >= collider->position->z - radius && minZ <= collider->position->z + radius)
+	double radius = collider->radius;
+	if (maxX >= collider->transform.position.x - radius && minX <= collider->transform.position.x + radius && maxY >= collider->transform.position.y - radius && minY <= collider->transform.position.y + radius && maxZ >= collider->transform.position.z - radius && minZ <= collider->transform.position.z + radius)
 		return true;
 	return false;
 }
 
-double OctTree::distanceToTriangle(Collider * collider, std::shared_ptr<Triangle> triangle)
+double OctTree::distanceToTriangle(std::shared_ptr<Collider> collider, std::shared_ptr<Triangle> triangle)
 {
-	glm::vec3 p = *collider->position;
+	glm::vec3 p = collider->transform.position;
 	glm::vec3 ba = triangle->p2 - triangle->p1; glm::vec3 pa = p - triangle->p1;
 	glm::vec3 cb = triangle->p3 - triangle->p2; glm::vec3 pb = p - triangle->p2;
 	glm::vec3 ac = triangle->p1 - triangle->p3; glm::vec3 pc = p - triangle->p3;
@@ -154,10 +342,10 @@ double OctTree::distanceToTriangle(Collider * collider, std::shared_ptr<Triangle
 		glm::dot(nor, pa)*glm::dot(nor, pa) / glm::length2(nor));
 }
 
-double OctTree::distanceToPlane(Collider * collider, std::shared_ptr<Triangle> triangle)
+double OctTree::distanceToPlane(std::shared_ptr<Collider> collider, std::shared_ptr<Triangle> triangle)
 {
 	double d = (triangle->normal.x * triangle->pos.x + triangle->normal.y * triangle->pos.y + triangle->normal.z * triangle->pos.z);
-	return (triangle->normal.x * collider->position->x + triangle->normal.y * collider->position->y + triangle->normal.z * collider->position->z - d);
+	return (triangle->normal.x * collider->transform.position.x + triangle->normal.y * collider->transform.position.y + triangle->normal.z * collider->transform.position.z - d);
 }
 
 void OctTree::solveSystem(double a, double b, double c, double d, double e, double f, double *x, double *y)
@@ -213,15 +401,15 @@ bool OctTree::projectionCollisions(float collX, float collY, float radius, float
 	return false;
 }
 
-bool OctTree::pointInSphere(glm::vec3 point, Collider * collider)
+bool OctTree::pointInSphere(glm::vec3 point, std::shared_ptr<Collider> collider)
 {
-	double d = sqrt((point.x - collider->position->x)*(point.x - collider->position->x) + (point.y - collider->position->y)*(point.y - collider->position->y) + (point.z - collider->position->z) *(point.z - collider->position->z));
+	double d = glm::length(point - collider->transform.position);// sqrt((point.x - collider->transform.position.x) * (point.x - collider->transform.position.x) + (point.y - collider->transform.position.y) * (point.y - collider->transform.position.y) + (point.z - collider->transform.position.z) * (point.z - collider->transform.position.z));
 	return d <= collider->radius;
 }
 
-bool OctTree::closestPointInSphere(glm::vec3 A, glm::vec3 B, Collider * collider)
+bool OctTree::closestPointInSphere(glm::vec3 A, glm::vec3 B, std::shared_ptr<Collider> collider)
 {
-	glm::vec3 D = *collider->position;
+	glm::vec3 D = collider->transform.position;
 	glm::vec3 AB = B - A;
 	glm::vec3 AD = D - A;
 	double t = glm::dot(AD, AB) / glm::dot(AB, AB);
@@ -233,14 +421,14 @@ bool OctTree::closestPointInSphere(glm::vec3 A, glm::vec3 B, Collider * collider
 	return false;
 }
 
-bool OctTree::closestPointInSphere(std::shared_ptr<Triangle> triangle, Collider * collider)
+bool OctTree::closestPointInSphere(std::shared_ptr<Triangle> triangle, std::shared_ptr<Collider> collider)
 {
 	double t = 0.0;
 	double s = 0.0;
 	glm::vec3 A = triangle->p1;
 	glm::vec3 B = triangle->p2;
 	glm::vec3 C = triangle->p3;
-	glm::vec3 D = *collider->position;
+	glm::vec3 D = collider->transform.position;
 
 	glm::vec3 AB = B - A;
 	glm::vec3 AC = C - A;
@@ -264,7 +452,7 @@ bool OctTree::closestPointInSphere(std::shared_ptr<Triangle> triangle, Collider 
 	return false;
 }
 
-bool OctTree::collideFace(Collider * collider, std::shared_ptr<Triangle> triangle)
+bool OctTree::collideFace(std::shared_ptr<Collider> collider, std::shared_ptr<Triangle> triangle)
 {
 	if (boundingBox(collider, triangle))
 	{
@@ -332,13 +520,13 @@ std::shared_ptr<ColorMesh> OctTree::combineMeshes(std::shared_ptr<GameObject> ga
 	return ColorMesh::meshFromTriangles(faces, r, g, b);
 }
 
-std::vector<std::shared_ptr<Triangle>> OctTree::collide(Collider * collider)
+std::vector<std::shared_ptr<Triangle>> OctTree::collide(std::shared_ptr<Collider> collider)
 {
 	std::shared_ptr<OctTreeNode> ptr = root;
 	std::vector<std::shared_ptr<Triangle>> triangles;
 	while (ptr != nullptr && ptr->leaf == false)
 	{
-		glm::vec3 point = *collider->position;
+		glm::vec3 point = collider->transform.position;
 		ptr = ptr->children[ptr->getRegion(point)];
 	}
 	
@@ -354,4 +542,3 @@ std::vector<std::shared_ptr<Triangle>> OctTree::collide(Collider * collider)
 	}
 	return triangles;
 }
-

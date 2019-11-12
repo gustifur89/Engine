@@ -20,6 +20,16 @@ public:
 		d = -glm::dot(normal, pos);
 	}
 
+	Triangle(glm::vec3 &p1, glm::vec3 &p2, glm::vec3 &p3, glm::vec3 &n)
+	{
+		this->p1 = p1;
+		this->p2 = p2;
+		this->p3 = p3;
+		pos = glm::vec3((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3, (p1.z + p2.z + p3.z) / 3);
+		this->normal = n;
+		d = -glm::dot(n, pos);
+	}
+
 	/** /
 	inline Triangle operator+(const glm::vec3& offSet)
 	{

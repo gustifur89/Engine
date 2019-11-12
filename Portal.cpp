@@ -14,6 +14,17 @@ Portal::Portal()
 //	glSetUp();
 }
 
+Portal::Portal(int width, int height)
+{
+	allPortals.push_back(this);
+	renderTexture = RenderTexture(width, height);
+	//renderTexture = RenderTexture(800, 600);
+	radius = 1.0f;
+	//	glBindFramebuffer(GL_FRAMEBUFFER, renderTexture.frameBuffer);
+
+	//	glSetUp();
+}
+
 std::vector<Portal*>Portal::allPortals = std::vector<Portal*>();
 
 Portal::~Portal()
@@ -78,7 +89,7 @@ double Portal::distanceToPlane(glm::vec3 entPos, glm::vec3 dir, glm::vec3 planeP
 	//return glm::dot(entPos, dir) - glm::dot(dir, planePoint);
 }
 
-void Portal::portalRender(Camera camera)
+void Portal::portalRender(Camera camera, int width, int height)
 {
 	if (!otherPortal) return;
 
@@ -94,9 +105,9 @@ void Portal::portalRender(Camera camera)
 	//to get the true minZ, we need to use the matrix projections...
 
 	//camera.fov * (1.0 - (minZ / camera.maxZ))
-	Camera portalCamera(camera.fov, 1.0f, minZ, camera.maxZ);
+	Camera portalCamera(camera.fov, camera.aspectRatio, minZ, camera.maxZ);
 
-	portalCamera.position = otherPortal->transform.position - (this->transform.position - camera.position);
+	portalCamera.position = otherPortal->transform.position + (camera.position - this->transform.position);
 
 	portalCamera.rotation = camera.rotation;
 
@@ -105,13 +116,15 @@ void Portal::portalRender(Camera camera)
 //	glBindTextureUnit(1, renderTexture.posTex);
 //	glBindTextureUnit(2, renderTexture.normTex);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderTexture.frameBuffer);
-	glViewport(0, 0, PORTAL_TEXTURE_SIZE, PORTAL_TEXTURE_SIZE);
+//	glViewport(0, 0, PORTAL_TEXTURE_SIZE, PORTAL_TEXTURE_SIZE);
+	glViewport(0, 0, width, height);
+//	glViewport(0, 0, 900, 650);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	world->render(portalCamera);
 	updated = true;
 }
 
-void Portal::preRenderPortals(std::vector<std::shared_ptr<Portal>> portals, Camera& camera, int depth)
+void Portal::preRenderPortals(std::vector<std::shared_ptr<Portal>> portals, Camera& camera, int width, int height, int depth)
 {
 	//find first to render
 	//we need to use recursion to find them..
@@ -119,7 +132,7 @@ void Portal::preRenderPortals(std::vector<std::shared_ptr<Portal>> portals, Came
 	for (int i = 0; i < portals.size(); i++)
 	{
 		//portals[i]->updated = true;
-		portals[i]->portalRender(camera);
+		portals[i]->portalRender(camera, width, height);
 	}
 
 }
@@ -143,19 +156,19 @@ void Portal::setUpShader(std::shared_ptr<ColorShader> shader)
 
 void Portal::collideInternal(std::shared_ptr<Entity> entity)
 {
-	glm::vec3 pos = entity->transform.position - transform.position;
+	glm::vec3 pos = entity->getPosition() - transform.position;
 	double dist = glm::length(pos);
 
-	if (dist <= entity->collider.radius + radius)
+	if (dist <= entity->radius + radius)
 	{
 		if (!entity->portalCollide && otherPortal)
 		{
-			entity->transform.position = otherPortal->transform.position + pos;
+			entity->setPosition(otherPortal->transform.position + pos);
 		//	entity->portalCollide = true;
 		}
 		entity->portalCollide = true;
 	}
-	else if (dist <= 2.0 * (entity->collider.radius + radius))
+	else if (dist <= 2.0 * (entity->radius + radius))
 	{
 		entity->portalCollide = false;
 	}

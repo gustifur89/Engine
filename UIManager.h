@@ -45,6 +45,9 @@ protected:
 
 	GLuint ssaoPosTexLoc;
 	GLuint ssaoNormTexLoc;
+	GLuint ssaoBlurWindowScaleLoc;
+	GLuint ssaoBlurAOTexLoc;
+	GLuint ssaowindowScaleLoc;
 	GLuint samplesLoc;
 	GLuint projectionLoc;
 	GLuint viewMatrixLoc;
@@ -101,9 +104,10 @@ public:
 
 	void delay(double timeDelay);
 
-	void display(Camera& camera);
+	void display(Camera& camera, std::shared_ptr<GameObject> renderObject);
 
 	//parameters
+	std::shared_ptr<GameObject> stage;
 	RenderTexture renderTexture;
 	ShadowTexture shadowTexture;
 	SSAOTexture ssaoTexture;
@@ -116,7 +120,7 @@ public:
 	double deltaMouseX, deltaMouseY;
 	double r, g, b;
 	std::string title;
-	std::shared_ptr<GameObject> stage;
+	
 	std::shared_ptr<GameObject> HUD;
 	std::vector<std::shared_ptr<Light>> lights;
 	double deltaTime;
@@ -127,5 +131,6 @@ public:
 	std::shared_ptr <Shader> windowShader;
 	std::shared_ptr <Shader> shadowShader;
 	std::shared_ptr <Shader> ssaoShader;
+	std::shared_ptr <Shader> ssaoBlurShader;
 };
 

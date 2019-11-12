@@ -132,7 +132,8 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 
 	if (useSSAO)
 	{
-		ssaoShader = Shader::loadShader("SSAO", "SSAO");
+		//ssaoShader = Shader::loadShader("SSAO", "SSAO");
+		ssaoShader = Shader::loadShader("AO", "AO");
 		ssaoShader->useShader();
 		ssaoPosTexLoc = ssaoShader->getUniformLocation("posTex");
 		ssaoNormTexLoc = ssaoShader->getUniformLocation("normTex");
@@ -141,9 +142,19 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 		projectionLoc = ssaoShader->getUniformLocation("projection");
 		noiseScaleLoc = ssaoShader->getUniformLocation("noiseScale");
 		viewMatrixLoc = ssaoShader->getUniformLocation("viewMatrix");
+		ssaowindowScaleLoc = ssaoShader->getUniformLocation("windowScale");
+		glUniform2f(ssaowindowScaleLoc, (float)1.0 / width, (float)1.0 / height);
 		glUniform1i(noiseTextureLoc, 0);
 		glUniform1i(ssaoPosTexLoc, 1);
 		glUniform1i(ssaoNormTexLoc, 2);
+
+		ssaoBlurShader = Shader::loadShader("blur", "blur");
+		ssaoBlurShader->useShader();
+		ssaoBlurWindowScaleLoc = ssaoBlurShader->getUniformLocation("windowScale");
+		ssaoBlurAOTexLoc = ssaoBlurShader->getUniformLocation("aoTex");
+		glUniform1i(ssaoBlurAOTexLoc, 5);
+		glUniform2f(ssaoBlurWindowScaleLoc, (float)1.0 / width, (float)1.0 / height);
+
 	}
 
 	if (useShadow)
@@ -199,7 +210,7 @@ bool UIManager::create(int width, int height, std::string title, int fps, unsign
 		return false;
 	}
 	glfwMakeContextCurrent(window); // Initialize GLEW
-	glewExperimental = true; // Needed in core profile
+	glewExperimental = true; // Needed in core profilea
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
 		return false;
@@ -454,6 +465,19 @@ void UIManager::renderSSAO(Camera & camera)
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
+
+	//BLur
+
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoTexture.frameBuffer);
+	ssaoBlurShader->useShader();
+	glBindTextureUnit(5, ssaoTexture.aoTexture);
+	glBindVertexArray(windowVAO);
+	glEnableVertexAttribArray(0);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDisableVertexAttribArray(0);
+	glBindVertexArray(0);
+
+
 }
 
 void UIManager::setHDR(float gamma, float exposure)
@@ -561,7 +585,7 @@ int UIManager::setShadowMap(Camera& camera, std::vector<std::shared_ptr<Light>> 
 	return numShadows;
 }
 
-void UIManager::display(Camera& camera)
+void UIManager::display(Camera& camera, std::shared_ptr<GameObject> renderObject)
 {
 	deltaTime = glfwGetTime() - oldTime;
 	oldTime += deltaTime;
@@ -602,7 +626,7 @@ void UIManager::display(Camera& camera)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//set up shadows
-	stage->render(camera);
+	renderObject->render(camera);
 
 	//glClear(GL_DEPTH_BUFFER_BIT);
 

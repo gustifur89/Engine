@@ -59,6 +59,7 @@ public:
 	static std::shared_ptr<ColorMesh> meshFromTriangles(std::vector<std::shared_ptr<Triangle>> faces, int r, int g, int b);
 	static std::shared_ptr<ColorMesh> meshFromTrianglesUnbound(std::vector<std::shared_ptr<Triangle>> faces, int r, int g, int b);
 	static std::shared_ptr<ColorMesh> meshFromVertexGrid(std::vector<std::vector<std::vector<bool>>> grid, Bounds bounds, int r, int g, int b);
+	static std::shared_ptr<ColorMesh> meshFromVertexGrid(std::vector<std::vector<double>> grid, Bounds bounds, int r, int g, int b);
 	static std::shared_ptr<ColorMesh> applyMatrixToMesh(std::shared_ptr<ColorMesh> mesh, glm::mat4 matrix);
 };
 

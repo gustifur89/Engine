@@ -614,9 +614,10 @@ std::vector<std::shared_ptr<Triangle>> ColorMesh::getTrianglesFromGrid(bool * ve
 	
 		std::shared_ptr<Triangle> n_face = std::shared_ptr<Triangle>( new Triangle(	glm::vec3(center.x + scale.x * vertexes[i + 0], center.y + scale.y * vertexes[i + 1], center.z + scale.z * vertexes[i + 2]),
 											glm::vec3(center.x + scale.x * vertexes[i + 3], center.y + scale.y * vertexes[i + 4], center.z + scale.z * vertexes[i + 5]),
-											glm::vec3(center.x + scale.x * vertexes[i + 6], center.y + scale.y * vertexes[i + 7], center.z + scale.z * vertexes[i + 8])));
+											glm::vec3(center.x + scale.x * vertexes[i + 6], center.y + scale.y * vertexes[i + 7], center.z + scale.z * vertexes[i + 8]),
+											glm::vec3(vertexes[i + 9], vertexes[i + 10], vertexes[i + 11])));
 		
-		n_face->normal = glm::vec3(vertexes[i + 9], vertexes[i + 10], vertexes[i + 11]);
+	//	n_face->normal = glm::vec3(vertexes[i + 9], vertexes[i + 10], vertexes[i + 11]);
 		//n_face->normal = glm::vec3(0,0,0);
 
 	//	std::cout << "source\n";
@@ -740,7 +741,8 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::
 		double dot = glm::dot(faces[i]->normal, light);
 		double height = fmin(faces[i]->p1.y, fmin(faces[i]->p2.y, faces[i]->p3.y));
 
-		if (height > -100)
+		/*
+		if (height > 10)
 		{
 			if (dot > 0.2)
 			{
@@ -812,9 +814,36 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::
 				b_ = (44) / 255.f;
 			}
 		}
+		*/
 
-
-
+		if (dot < 0.0)
+		{
+			r_ = (120) / 255.f;
+			g_ = (110) / 255.f;
+			b_ = (122) / 255.f;
+		}
+		else if (height > 22)
+		{
+			//grass
+			r_ = (25) / 255.f;
+			g_ = (200) / 255.f;
+			b_ = (150) / 255.f;
+		}
+		else if (height > 20)
+		{
+			//sand
+			r_ = (129) / 255.f;
+			g_ = (108) / 255.f;
+			b_ = (88) / 255.f;
+		}
+		else
+		{
+			//under rock
+			r_ = (120) / 255.f;
+			g_ = (110) / 255.f;
+			b_ = (122) / 255.f;
+		}
+	
 		//	std::cout << "mesh from triangles\n";
 		//	std::cout << faces[i]->p1.x << "\t" << faces[i]->p1.y << "\t" << faces[i]->p1.z << "\n";
 		//	std::cout << faces[i]->p2.x << "\t" << faces[i]->p2.y << "\t" << faces[i]->p2.z << "\n";
@@ -906,18 +935,104 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector
 				verts[6] = grid[x + 0][y + 0][z + 1];
 				verts[7] = grid[x + 0][y + 0][z + 0];
 				//glm::vec3 pos = glm::vec3(((double) x / width), ((double) y / height), ((double) z / depth));
+			
+				//if (verts[0] == verts[1], verts[1] == verts[2], verts[2] == verts[3], verts[3] == verts[4], verts[4] == verts[5], verts[5] == verts[6], verts[6] == verts[7])
+
+			//	if (hashVerts(verts) == 0 || hashVerts(verts) == 255)
+			//	{
+			//		delete[] verts;
+			//		continue; 
+			//	}
+
 				glm::vec3 pos = glm::vec3(faceScaleX * ((double)x / width), faceScaleY * ((double)y / height), faceScaleZ * ((double)z / depth));
-				if (pos.x < 0.0)
-					std::cout << pos.x << " : " << pos.y << " : " << pos.z << "\n";
-			//	glm::vec3 pos = glm::vec3(x, y, z);
-			//	glm::vec3 scaleT = glm::vec3(1.0);
+				//	if (pos.x < 0.0)
+				//		std::cout << pos.x << " : " << pos.y << " : " << pos.z << "\n";
+				//	glm::vec3 pos = glm::vec3(x, y, z);
+				//	glm::vec3 scaleT = glm::vec3(1.0);
 				std::vector<std::shared_ptr<Triangle>> triangles = getTrianglesFromGrid(verts, pos, scale);
 				for (int i = 0; i < triangles.size(); i++)
 				{
 					faces.push_back(triangles[i]);
 				}
-				delete verts;
+					
+				delete [] verts;
 			}
+		}
+	}
+
+	return meshFromTriangles(faces, r, g, b);
+}
+
+std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector<double>> grid, Bounds bounds, int r, int g, int b)
+{
+	// maybe make a more general MESHDATA class. That has general info. Like just the arrays. That way you can recolor and shit.
+	// MeshData has the Vertex List and Face List...  maybe....
+	int width = grid.size() - 1;
+	int height = (bounds.high.y - bounds.low.y);
+	int depth = grid[0].size() - 1;
+
+	double scaleX = (bounds.high.x - bounds.low.x) / (width);
+	double scaleY = (bounds.high.y - bounds.low.y);// / (height);
+	double scaleZ = (bounds.high.z - bounds.low.z) / (depth);
+
+	double faceScaleX = (bounds.high.x - bounds.low.x);
+	double faceScaleY = (bounds.high.y - bounds.low.y);
+	double faceScaleZ = (bounds.high.z - bounds.low.z);
+
+	glm::vec3 low = bounds.low;
+
+	glm::vec3 scale = glm::vec3(scaleX, scaleY, scaleZ);
+	std::vector<std::shared_ptr<Triangle>> faces;
+
+	for (int x = 0; x < width; x++)
+	{
+		for (int z = 0; z < depth; z++)
+		{
+			
+			double y0 = grid[x][z];
+			double y1 = grid[x+1][z];
+			double y2 = grid[x][z+1];
+			double y3 = grid[x+1][z+1];
+
+			double x_0 = ((double)x / width);
+			double x_1 = ((double)(x + 1) / width);
+			double z_0 = ((double)z / depth);
+			double z_1 = ((double)(z + 1) / depth);
+
+
+
+			//v0
+			glm::vec3 v0 = glm::vec3(low.x + faceScaleX * x_0, 0.5 * ceil(faceScaleY * y0 / 0.5), low.z + faceScaleZ * z_0);
+			//v1
+			glm::vec3 v1 = glm::vec3(low.x + faceScaleX * x_1, 0.5 * ceil(faceScaleY * y1 / 0.5), low.z + faceScaleZ * z_0);
+			//v2
+			glm::vec3 v2 = glm::vec3(low.x + faceScaleX * x_0, 0.5 * ceil(faceScaleY * y2 / 0.5), low.z + faceScaleZ * z_1);
+			//v3
+			glm::vec3 v3 = glm::vec3(low.x + faceScaleX * x_1, 0.5 * ceil(faceScaleY * y3 / 0.5), low.z + faceScaleZ * z_1);
+
+			std::shared_ptr<Triangle> triangle0 = std::shared_ptr<Triangle>(new Triangle(v0, v2, v1));
+			std::shared_ptr<Triangle> triangle1 = std::shared_ptr<Triangle>(new Triangle(v2, v3, v1));
+
+			faces.push_back(triangle0);
+			faces.push_back(triangle1);
+
+
+			/*
+			//v0
+			glm::vec3 v0 = glm::vec3(faceScaleX * ((double)x / width), faceScaleY * ((double)y / height), faceScaleZ * ((double)z / depth));
+			//v1
+			glm::vec3 v1 = glm::vec3(faceScaleX * ((double)(x+1) / width), faceScaleY * ((double)y / height), faceScaleZ * ((double)z / depth));
+			//v2
+			glm::vec3 v2 = glm::vec3(faceScaleX * ((double)x / width), faceScaleY * ((double)(y+1) / height), faceScaleZ * ((double)z / depth));
+			//v3
+			glm::vec3 v3 = glm::vec3(faceScaleX * ((double)(x+1) / width), faceScaleY * ((double)(y + 1) / height), faceScaleZ * ((double)z / depth));
+		
+			std::shared_ptr<Triangle> triangle0 = std::shared_ptr<Triangle>(new Triangle(v0, v1, v2));
+			std::shared_ptr<Triangle> triangle1 = std::shared_ptr<Triangle>(new Triangle(v2, v1, v3));
+		
+			faces.push_back(triangle0);
+			faces.push_back(triangle1);
+			*/
 		}
 	}
 
