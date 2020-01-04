@@ -3,6 +3,10 @@
 
 // ============================ Portal ===============================
 
+GLuint Portal::radiusLoc = 0;
+GLuint Portal::portalUVLoc = 0;
+GLuint Portal::factorLoc = 0;
+
 Portal::Portal()
 {
 	allPortals.push_back(this);
@@ -23,6 +27,9 @@ Portal::Portal(int width, int height)
 	//	glBindFramebuffer(GL_FRAMEBUFFER, renderTexture.frameBuffer);
 
 	//	glSetUp();
+
+
+
 }
 
 std::vector<Portal*>Portal::allPortals = std::vector<Portal*>();
@@ -47,6 +54,9 @@ void Portal::renderFunc(Camera& camera)
 {
 	if (updated)
 	{
+		float distance = glm::length(camera.position - this->transform.position);
+		float projRadius = radius * (camera.minZ / distance);
+
 		glm::mat4 MVPmatrix = camera.getProjection() * camera.getTransform() * transform.getTransform();
 
 		glm::mat4 scale = glm::scale(glm::vec3(1.0 / radius));
@@ -61,11 +71,20 @@ void Portal::renderFunc(Camera& camera)
 
 		glm::mat4 NMmatrix = camera.getProjection();// *glm::mat4(rotation);// camera.getTransform();// *transform.getTransform();// *rotation;// *transform.getTransform() * scale;// transform.getScale();// camera.getRotation() * camera.getScale() * transform.getRotation() * transform.getScale();// camera.getTransform() * scale;
 		
+
+		glm::vec4 tempUV = MVPmatrix * glm::vec4(this->transform.position, 1);
+		glm::vec2 portalUV = 0.5f * (glm::vec2(tempUV.x/ tempUV.w, tempUV.y / tempUV.w) + glm::vec2(1, 1));
+
+		std::cout << portalUV.x << " : " << portalUV.y << "\n";
+
 		glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
 		glBindTextureUnit(3, renderTexture.colTex);
 		glBindTextureUnit(4, renderTexture.posTex);
 		glBindTextureUnit(5, renderTexture.normTex);
 		shader->useShader();
+		shader->loadFloat(Portal::radiusLoc, projRadius);
+		shader->loadFloat(Portal::factorLoc, 0.5);
+		shader->loadVector(Portal::portalUVLoc, portalUV);
 		shader->setLightInternal(shader->light);
 		shader->setMatrixes(MVPmatrix, NMmatrix, colorMatrix);
 		mesh->render();
@@ -152,6 +171,10 @@ void Portal::setUpShader(std::shared_ptr<ColorShader> shader)
 	glUniform1i(colTexLoc, 3);
 	glUniform1i(posTexLoc, 4);
 	glUniform1i(normTexLoc, 5);
+
+	Portal::radiusLoc = shader->getUniformLocation("radius");
+	Portal::portalUVLoc = shader->getUniformLocation("portalUV");
+	Portal::factorLoc = shader->getUniformLocation("factor");
 }
 
 void Portal::collideInternal(std::shared_ptr<Entity> entity)

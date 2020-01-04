@@ -366,6 +366,16 @@ void Shader::loadVector(int location, glm::vec3 vector)
 	glUniform3f(location, vector.x, vector.y, vector.z);
 }
 
+void Shader::loadVector(int location, glm::vec2 vector)
+{
+	glUniform2f(location, vector.x, vector.y);
+}
+
+void Shader::loadVector(int location, glm::vec4 vector)
+{
+	glUniform4f(location, vector.x, vector.y, vector.z, vector.w);
+}
+
 void Shader::loadBoolean(int location, bool value)
 {
 	float toLoad = 0;
@@ -381,6 +391,12 @@ void Shader::loadMatrix(int location, glm::mat4 matrix)
 void Shader::loadMatrix(int location, glm::mat3 matrix)
 {
 	glUniformMatrix3fv(location, 1, GL_FALSE, &matrix[0][0]);
+}
+
+void Shader::loadArray(int location, std::vector<GLfloat> data)
+{
+	//glUniform1fv(location, data.size(), reinterpret_cast<GLfloat*>(data.data()));
+	glUniform1fv(location, data.size(), &data[0]);
 }
 
 void Shader::loadTexture(int location, int textureID)

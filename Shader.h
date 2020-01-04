@@ -27,6 +27,8 @@ public:
 	void loadInt(int location, int value);
 
 	void loadVector(int location, glm::vec3 vector);
+	void loadVector(int location, glm::vec4 vector);
+	void loadVector(int location, glm::vec2 vector);
 
 	void loadBoolean(int location, bool value);
 
@@ -35,6 +37,8 @@ public:
 	void loadMatrix(int location, glm::mat4 matrix);
 
 	void loadMatrix(int location, glm::mat3 matrix);
+
+	void loadArray(int location, std::vector<GLfloat> data);
 
 	GLuint programID;
 };

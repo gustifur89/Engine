@@ -12,6 +12,10 @@ class Portal : public GameObjectColor
 {
 private:
 	double distanceToPlane(glm::vec3 entPos, glm::vec3 dir, glm::vec3 planePoint);
+
+	static GLuint radiusLoc;
+	static GLuint portalUVLoc;
+	static GLuint factorLoc;
 public:
 	Portal();
 	Portal(int width, int height);

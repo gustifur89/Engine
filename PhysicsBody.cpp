@@ -10,6 +10,7 @@ PhysicsBody::PhysicsBody()
 	friction = 0.0;
 	locked = false;
 	elasticity = 0.0;
+	mass = 1.0;
 }
 
 PhysicsBody::~PhysicsBody()
@@ -22,7 +23,7 @@ void PhysicsBody::addCollider(glm::vec3 relPos, float radius)
 	collider->physicsBody = shared_from_this();
 	collider->relPos = glm::vec4(relPos, 1.0);
 	this->colliders.push_back(collider);
-	Physics::colliderList.push_back(collider);
+	Physics::addCollider(collider);
 }
 
 void PhysicsBody::applyForce(glm::vec3 force, glm::vec3 point)
@@ -49,6 +50,30 @@ void PhysicsBody::applyImpulse(glm::vec3 impulse, glm::vec3 point)
 
 void PhysicsBody::collisionReaction(Collision collision)
 {
+	//new approach.
+	glm::vec3 difference = this->transform.position - collision.position;
+
+	glm::vec3 normal = glm::normalize(difference);
+	float distance = collision.rectifyingDistance;
+
+	glm::vec3 reactionImpulse = collision.reactionImpulse;
+
+	float dot = glm::dot(velocity, collision.normal);
+	float posDot = glm::dot(difference, collision.normal);
+	
+	//glm::vec3 velocityCorrection = (dot <= 0) ? -1.0f * (1.0f + this->elasticity) * reactionImpulse : glm::vec3(0);
+	glm::vec3 velocityCorrection = (dot <= 0) ? reactionImpulse : glm::vec3(0);
+	glm::vec3 positionCorrection = distance * collision.normal;
+
+	float offSet = glm::dot(difference, collision.normal) < 0 ? 1.0 : 0.0;
+	
+//	glm::vec3 impulse = velocityCorrection + positionCorrection;//offSet * difference + velocityCorrection;
+	glm::vec3 impulse = velocityCorrection + offSet;// +positionCorrection;
+		  
+	this->applyImpulse(impulse, glm::vec3(0));
+
+
+	/*
 	float dot = glm::dot(collision.normal, collision.relVelocity);
 
 	glm::vec3 projVelocity = dot < 0 ? -dot * collision.normal : glm::vec3(0);
@@ -65,6 +90,8 @@ void PhysicsBody::collisionReaction(Collision collision)
 	//glm::vec3 impulse = collision.lockedCorrection * (-elasticFactor * projVelocity + rectifyingVector);
 	glm::vec3 impulse = elasticFactor * projVelocity + collision.lockedCorrection * rectifyingVector;
 
+	//std::cout << rectifyingVector.y << "\n";
+
 	//maybe do a conservation of energy check?s
 
 	//float currentEnergy = glm::length(this->velocity);
@@ -77,6 +104,7 @@ void PhysicsBody::collisionReaction(Collision collision)
 	//}
 
 	this->applyImpulse(impulse, collision.position);
+	*/
 }
 
 void PhysicsBody::physicsIteration(float deltaTime)
@@ -99,7 +127,11 @@ void PhysicsBody::physicsIteration(float deltaTime)
 		glm::vec3 frictionForce = -friction * glm::normalize(velocity);
 		this->applyForce(frictionForce, glm::vec3(0));
 	}
-	velocity += impulse + deltaTime * force;
+	//f = ma
+	// f = mdv/dt
+	//  dv = f*dt / m
+	//deltaV = (1/m) * impulse + (1/m) * force * time
+	velocity += (1.0f / mass) * (impulse + deltaTime * force);
 	impulse = glm::vec3(0);
 	force = glm::vec3(0);
 	forcePoint = glm::vec3(0);
@@ -123,6 +155,7 @@ std::vector<std::shared_ptr<PhysicsBody>> Physics::physicsBodyList = std::vector
 std::vector<std::shared_ptr<Collider>> Physics::colliderList = std::vector<std::shared_ptr<Collider>>();
 std::vector<std::shared_ptr<CollisionStructure>> Physics::collisionStructureList = std::vector<std::shared_ptr<CollisionStructure>>();
 std::stack<Collision> Physics::collisions = std::stack<Collision>();
+std::shared_ptr<infiniteColliderGrid> Physics::colliderGrid = std::shared_ptr<infiniteColliderGrid>(new infiniteColliderGrid(glm::vec3(1, 1, 1)));
 
 void Physics::physicsStep(float deltaTime, int steps)
 {
@@ -146,17 +179,41 @@ void Physics::physicsStep(float deltaTime)
 		}
 	}
 	
+	//update collider grid
+	Physics::colliderGrid->update();
+
+	for (int i = 0; i < physicsBodyList.size(); i++)
+	{
+		for (int j = 0; j < physicsBodyList[i]->colliders.size(); j++)
+		{
+			Physics::colliderGrid->collision(physicsBodyList[i]->colliders[j], collisions);
+			for (int k = 0; k < collisionStructureList.size(); k++)
+			{
+				physicsBodyList[i]->colliders[j]->collision(collisionStructureList[k], collisions);
+			}
+		}
+
+	}
+
+	//then react. May just add to the collide everything step;
+	
+	while (collisions.size() > 0)
+	{
+		Collision collision = collisions.top();
+		collisions.pop();
+		collision.physicsBody->collisionReaction(collision);
+	}
+
+	for (int i = 0; i < physicsBodyList.size(); i++)
+	{
+		physicsBodyList[i]->applyForce(gravity, glm::vec3(0, 0, 0));
+		physicsBodyList[i]->physicsIteration(deltaTime);
+	}
+
+
+	/*
 
 	//Collide everything
-	/*
-	for (int i = 0; i < colliderList.size(); i++)
-	{
-		for (int j = i+1; j < colliderList.size(); j++)
-		{
-			colliderList[i]->collision(colliderList[j], Physics::collisions);
-		}
-	}
-	*/
 	for (int i = 0; i < physicsBodyList.size(); i++)
 	{
 		for (int j = 0; j < physicsBodyList[i]->colliders.size(); j++)
@@ -183,13 +240,14 @@ void Physics::physicsStep(float deltaTime)
 		collisions.pop();
 		collision.physicsBody->collisionReaction(collision);
 	}
-	//*/
 
 	for (int i = 0; i < physicsBodyList.size(); i++)
 	{
 		physicsBodyList[i]->applyForce(gravity, glm::vec3(0,0,0));
 		physicsBodyList[i]->physicsIteration(deltaTime);
 	}
+
+	//*/
 
 	//collider everything
 	/*
@@ -213,6 +271,8 @@ void Physics::physicsStep(float deltaTime)
 
 void Physics::addCollider(std::shared_ptr<Collider> collider)
 {
+	std::cout << "added\n";
+	colliderGrid->addColliderToGrid(collider);
 	colliderList.push_back(collider);
 }
 

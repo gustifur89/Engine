@@ -50,6 +50,7 @@ int main()
 	std::shared_ptr<ColorMesh> pillarMesh = ColorMesh::loadFromFile("pillar");
 	std::shared_ptr<ColorMesh> portalGunMesh = ColorMesh::loadFromFile("portalGun");
 	std::shared_ptr<ColorMesh> portalMesh = ColorMesh::loadFromFile("portalMesh2");//portalMesh3  planar_portal  portalMesh2
+	std::shared_ptr<ColorMesh> xwingMesh = ColorMesh::loadFromFile("x-wing");
 	
 	std::vector<std::shared_ptr<Portal>> portals;
 
@@ -62,11 +63,11 @@ int main()
 	//soundEmmiter0->play();
 
 
-	/*
+//	/*
 	std::shared_ptr<Portal> portal2(new Portal(UI.width, UI.height));
 	portal2->mesh = portalMesh;
 	portal2->shader = portalShader;
-	portal2->transform.position = glm::vec3(-26, 1.5, 0);
+	portal2->transform.position = glm::vec3(-26, 6, 0);
 	portal2->setFillColor(189, 255, 142);
 	portal2->setRadius(2.0);
 	portal2->setWorld(world1);
@@ -83,6 +84,7 @@ int main()
 	stage->addChild(portal1);
 	portals.push_back(portal1);
 
+	/*
 	std::shared_ptr<Portal> portal3(new Portal(UI.width, UI.height));
 	portal3->mesh = portalMesh;
 	portal3->shader = portalShader;
@@ -100,9 +102,18 @@ int main()
 	portal4->setWorld(world1);
 	stage->addChild(portal4);
 	portals.push_back(portal4);
+	*/
 
 	Portal::linkPortals(portal1, portal2);
-	Portal::linkPortals(portal3, portal4);
+//	Portal::linkPortals(portal3, portal4);
+
+
+	std::shared_ptr<GameObjectColor> xwing(new GameObjectColor);
+	xwing->transform.position = glm::vec3(5, 8, 1);
+	xwing->mesh = xwingMesh;
+	xwing->shader = colorShader;
+	world1->addChild(xwing);
+
 
 	//*/
 	/*
@@ -164,6 +175,7 @@ int main()
 	entities.push_back(player);
 	land->setTarget(player);
 	player->testName = 13;
+	player->colliders[0]->colliderType = 2;
 	Physics::addPhysicsBody(player);
 
 	//HUD
@@ -230,14 +242,14 @@ int main()
 	basic0->setFillColor(200, 200, 80);
 	basic0->transform.scale = glm::vec3(4, 1, 4);
 	basic0->transform.position = glm::vec3(0, -2, 0);
-	world2->addChild(basic0);
+	world1->addChild(basic0);
 	
 	std::shared_ptr<OctTree> tree(new OctTree());
 	tree->build(world2, 6, 2);
 	Physics::addCollisionStructure(tree);
 	Physics::addCollisionStructure(land);
 
-	Physics::gravity = glm::vec3(0, -10, 0);
+	//Physics::gravity = glm::vec3(0, -10, 0);
 
 	do
 	{
@@ -251,9 +263,11 @@ int main()
 			ball->setPosition(player->getPosition());
 			ball->friction = 2.0;
 			ball->addCollider(glm::vec3(0, 0, 0), 1.0);
+			ball->applyImpulse(player->velocity, glm::vec3(0));
+			ball->mass = 1.0;
+			//ball->colliders[0]->colliderType = 2;
 			Physics::addPhysicsBody(ball);
 		}
-
 
 
 		player->move();
@@ -307,8 +321,10 @@ int main()
 				ball->setScale(glm::vec3(radius));
 				ball->friction = 2.0;
 				ball->addCollider(glm::vec3(0, 0, 0), radius);
-				ball->colliders[0]->colliderType = 1;
+				//ball->colliders[0]->colliderType = 1;
 				ball->elasticity = 1.0;
+				ball->mass = 0.2;
+				ball->applyImpulse(player->velocity, glm::vec3(0));
 				Physics::addPhysicsBody(ball);
 				ball->applyImpulse(ballSpeed * direction, glm::vec3(0, 0, 0));
 			}
