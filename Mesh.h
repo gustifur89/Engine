@@ -5,7 +5,6 @@
 class Mesh
 {
 protected:
-
 	void bindIndexVBO(std::vector<GLuint> indexes);
 	void bindVertexAttribVBO(int attrib, int size, std::vector<GLfloat> data);
 

@@ -32,18 +32,38 @@ glm::mat4 Camera::getProjection()
 
 glm::mat4 Camera::getTransform()
 {
-	glm::vec4 lookDirection(0,0,1, 0);	//Looking direction in viewSpace
+	glm::vec4 lookDirection(0, 0, 1, 0);	//Looking direction in viewSpace
+	glm::vec4 leftDirection(1, 0, 0, 0);
 	//rotate by the direction
 	glm::mat4 rotationMatrix = this->getRotation();// glm::toMat4(glm::quat((float)TO_RAD * rotation));
 	//roate the look direction by the rotation
 	lookDirection = rotationMatrix * lookDirection;
-	glm::vec3 lookAt = position + glm::vec3(lookDirection);
+	leftDirection = rotationMatrix * leftDirection;
 
+	glm::vec3 upDir = glm::normalize(glm::cross(glm::vec3(lookDirection), glm::vec3(leftDirection)));
+
+	glm::vec3 lookAt = position + glm::vec3(lookDirection);
+	
+	//Does what I want
+	return glm::lookAt(
+		position,	// the position of your camera, in world space
+		lookAt,		// where you want to look at, in world space
+		upDir    // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
+	);
+
+	/*
 	return glm::lookAt(
 		position,	// the position of your camera, in world space
 		lookAt,		// where you want to look at, in world space
 		glm::vec3(0,1,0)    // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
 	);
+	*/
+
+
+
+//	return this->getTranslate() * this->getRotation() * this->getScale();
+//	return this->getRotation();
+
 }
 
 bool Camera::isSphereInView(glm::vec3 position, double radius, glm::mat4 modelMatrix)

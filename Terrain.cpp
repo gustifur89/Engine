@@ -133,7 +133,7 @@ std::shared_ptr<Chunk> Terrain::generateChunk(glm::vec2 pos, std::pair<double, d
 						tree->transform.position.x = scale.x * ((pos.x + x_) * chunkSize.x + Gen::random() * meshDensity);
 						tree->transform.position.y = scale.y * (y_ * chunkSize.y + Gen::random() * meshDensity) + Gen::random() * 20.0 + 20.0;
 						tree->transform.position.z = scale.z * ((pos.y + z_) * chunkSize.z + Gen::random() * meshDensity);
-						tree->transform.rotation.y = (rand() % 360);
+						tree->transform.setRotation(0, (rand() % 360), 0);
 						//tree->transform.scale.y = Gen::random() * 2.0 + 0.5;
 
 						double scale = ((rand() % 1000) / 1000.0) * 1.0 + 0.6;

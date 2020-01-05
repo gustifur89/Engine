@@ -8,7 +8,6 @@ Entity::Entity(float radius, std::shared_ptr<Mesh> mesh, UIManager * UI, bool sl
 //	collider->transform.position = this->transform.position;
 //	collider->velocity = this->vel;
 	this->mesh = mesh;
-	lookRotation = glm::vec3(0.0);
 	this->UI = UI;
 	this->slidable = slidable;
 	this->testName = 0;
@@ -114,7 +113,7 @@ void Entity::move(std::shared_ptr<CollisionStructure> collisionStructure)
 
 void Entity::updateCamera(Camera & camera, double upPercent)
 {
-	camera.rotation = lookRotation;
+	camera.rotationMatrix = PhysicsBody::transform.rotationMatrix;//lookRotation;
 	camera.position = PhysicsBody::transform.position;
 	//camera.position.y += collider->radius * upPercent;
 }
@@ -153,13 +152,14 @@ glm::vec3 Entity::getPosition()
 
 void Entity::setRotation(glm::vec3 rotation)
 {
-	PhysicsBody::transform.rotation = rotation;
-	GameObjectColor::transform.rotation = rotation;
+	PhysicsBody::transform.setRotation(rotation);
+	GameObjectColor::transform.setRotation(rotation);
 }
 
+//#depriciated
 glm::vec3 Entity::getRotation()
 {
-	return PhysicsBody::transform.rotation;
+	return glm::vec3(0, 0, 0);// PhysicsBody::transform.rotation;
 }
 
 void Entity::setTransform(Transform transform)
@@ -219,9 +219,9 @@ void Holdable::move(std::shared_ptr<CollisionStructure> collisionStructure)
 
 void Holdable::setTransform(Transform transform)
 {
-	glm::vec3 Z = Transform::getTransformedZ(transform.rotation);
-	glm::vec3 X = Transform::getTransformedX(transform.rotation);
-	glm::vec3 Y = Transform::getTransformedY(transform.rotation);
+	glm::vec3 Z = Transform::getTransformedZ(transform.rotationMatrix);
+	glm::vec3 X = Transform::getTransformedX(transform.rotationMatrix);
+	glm::vec3 Y = Transform::getTransformedY(transform.rotationMatrix);
 
 
 //	glm::mat3 POS = glm::mat3(X,Y,Z);
@@ -230,7 +230,7 @@ void Holdable::setTransform(Transform transform)
 	this->PhysicsBody::transform.position.y = transform.position.y + X.y * relative.position.x + Y.y * relative.position.y + Z.y * relative.position.z;
 	this->PhysicsBody::transform.position.z = transform.position.z + X.z * relative.position.x + Y.z * relative.position.y + Z.z * relative.position.z;
 
-	this->PhysicsBody::transform.rotation += relative.rotation;
+	this->PhysicsBody::transform.rotate(relative.rotationMatrix);
 }
 
 void Holdable::move(std::vector<std::shared_ptr<Holdable>> items, std::shared_ptr<CollisionStructure> collisionStructure)
@@ -361,19 +361,19 @@ void Player::move(std::shared_ptr<CollisionStructure> collisionStructure)
 	if (UI->getMouseLockState()) {
 		double deltaPitch = UI->deltaMouseY * Settings::mouseSensitivity;
 		double deltaPivot = -UI->deltaMouseX * Settings::mouseSensitivity;
-		lookRotation.x += deltaPitch;
-		lookRotation.y += deltaPivot;
-		if (lookRotation.x > 89.9) lookRotation.x = 89.9;
-		if (lookRotation.x < -89.9) lookRotation.x = -89.9;
+	//	lookRotation.x += deltaPitch;
+	//	lookRotation.y += deltaPivot;
+	//	if (lookRotation.x > 89.9) lookRotation.x = 89.9;
+	//	if (lookRotation.x < -89.9) lookRotation.x = -89.9;
 	}
 
-	glm::vec3 directionForward = Transform::getTransformedZ(lookRotation);
-	glm::vec3 directionStrafe = Transform::getTransformedX(lookRotation);
-	glm::vec3 directionVertical = Transform::getTransformedY(lookRotation);
+//	glm::vec3 directionForward = Transform::getTransformedZ(lookRotation);
+//	glm::vec3 directionStrafe = Transform::getTransformedX(lookRotation);
+//	glm::vec3 directionVertical = Transform::getTransformedY(lookRotation);
 
 	if (noClip)
 	{
-		vel = (float) forwardSpeed * directionForward + (float) strafeSpeed * directionStrafe + (float) verticalSpeed * directionVertical;
+	//	vel = (float) forwardSpeed * directionForward + (float) strafeSpeed * directionStrafe + (float) verticalSpeed * directionVertical;
 
 	}
 	else
@@ -413,8 +413,8 @@ void Player::move(std::shared_ptr<CollisionStructure> collisionStructure)
 		}
 		
 
-		vel.z = cos(lookRotation.y * TO_RAD) * forwardSpeed - sin(lookRotation.y * TO_RAD) * strafeSpeed;
-		vel.x = sin(lookRotation.y * TO_RAD) * forwardSpeed + cos(lookRotation.y * TO_RAD) * strafeSpeed;
+	//	vel.z = cos(lookRotation.y * TO_RAD) * forwardSpeed - sin(lookRotation.y * TO_RAD) * strafeSpeed;
+	//	vel.x = sin(lookRotation.y * TO_RAD) * forwardSpeed + cos(lookRotation.y * TO_RAD) * strafeSpeed;
 	}
 
 	//std::cout << collisionStructure.collide(collider).size() << "\n";
@@ -455,13 +455,16 @@ void Player::move()
 	bool a = UI->isKeyPressed(GLFW_KEY_A);
 	bool d = UI->isKeyPressed(GLFW_KEY_D);
 
-	bool e = UI->isKeyPressed(GLFW_KEY_SPACE);
-	bool q = UI->isKeyPressed(GLFW_KEY_LEFT_CONTROL);
+	bool space = UI->isKeyPressed(GLFW_KEY_SPACE);
+	bool ctrl = UI->isKeyPressed(GLFW_KEY_LEFT_CONTROL);
 
 	bool up = UI->isKeyPressed(GLFW_KEY_UP);
 	bool down = UI->isKeyPressed(GLFW_KEY_DOWN);
 	bool right = UI->isKeyPressed(GLFW_KEY_RIGHT);
 	bool left = UI->isKeyPressed(GLFW_KEY_LEFT);
+
+	bool e = UI->isKeyPressed(GLFW_KEY_E);
+	bool q = UI->isKeyPressed(GLFW_KEY_Q);
 
 	double forwardSpeed = 0.0;
 	double strafeSpeed = 0.0;
@@ -482,9 +485,9 @@ void Player::move()
 	else
 		strafeSpeed = -10.0;// *UI->deltaTime;
 
-	if (e == q)
+	if (space == ctrl)
 		verticalSpeed = 0.0;
-	else if (q)
+	else if (ctrl)
 		verticalSpeed = -10.0;// *UI->deltaTime;
 	else
 		verticalSpeed = 10.0;// *UI->deltaTime;
@@ -503,19 +506,35 @@ void Player::move()
 	}
 
 	//LOOK
+
+	glm::vec3 dRotation = glm::vec3(0);
+
 	if (UI->getMouseLockState()) {
 		double deltaPitch = UI->deltaMouseY * Settings::mouseSensitivity;
 		double deltaPivot = -UI->deltaMouseX * Settings::mouseSensitivity;
-		lookRotation.x += deltaPitch;
-		lookRotation.y += deltaPivot;
-		if (lookRotation.x > 89.9) lookRotation.x = 89.9;
-		if (lookRotation.x < -89.9) lookRotation.x = -89.9;
+		dRotation.x = deltaPitch;
+		dRotation.y = deltaPivot;
+	//	if (lookRotation.x > 89.9) lookRotation.x = 89.9;
+	//	if (lookRotation.x < -89.9) lookRotation.x = -89.9;
 	}
 
-	glm::vec3 directionForward = Transform::getTransformedZ(lookRotation);
-	glm::vec3 directionStrafe = Transform::getTransformedX(lookRotation);
-	glm::vec3 directionVertical = Transform::getTransformedY(lookRotation);
+	if (e == q)
+		dRotation.z = 0.0;
+	else if (q)
+		dRotation.z = -80.0;
+	else
+		dRotation.z = 80.0;
 
+	dRotation = (float) UI->deltaTime * glm::radians(dRotation);
+
+	lookRotation.rotate(dRotation);
+
+	PhysicsBody::transform.rotationMatrix = lookRotation.rotationMatrix;
+
+	glm::vec3 directionForward = Transform::getTransformedZ(lookRotation.rotationMatrix);
+	glm::vec3 directionStrafe = Transform::getTransformedX(lookRotation.rotationMatrix);
+	glm::vec3 directionVertical = Transform::getTransformedY(lookRotation.rotationMatrix);
+	
 	if (noClip)
 	{
 		vel = (float)forwardSpeed * directionForward + (float)strafeSpeed * directionStrafe + (float)verticalSpeed * directionVertical;
@@ -558,8 +577,8 @@ void Player::move()
 		}
 
 
-		vel.z = cos(lookRotation.y * TO_RAD) * forwardSpeed - sin(lookRotation.y * TO_RAD) * strafeSpeed;
-		vel.x = sin(lookRotation.y * TO_RAD) * forwardSpeed + cos(lookRotation.y * TO_RAD) * strafeSpeed;
+		//vel.z = cos(lookRotation.y * TO_RAD) * forwardSpeed - sin(lookRotation.y * TO_RAD) * strafeSpeed;
+		//vel.x = sin(lookRotation.y * TO_RAD) * forwardSpeed + cos(lookRotation.y * TO_RAD) * strafeSpeed;
 
 		this->velocity.x = vel.x;
 		this->velocity.z = vel.z;

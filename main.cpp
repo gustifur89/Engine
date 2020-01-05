@@ -139,7 +139,7 @@ int main()
 	{
 		std::shared_ptr<GameObjectColor> obj(new GameObjectColor);
 		obj->transform.position = glm::vec3(rand() % 120 - 60, rand() % 60 - 30, rand() % 120 - 60);
-		obj->transform.rotation.y = (rand() % 360);
+		obj->transform.setRotation(glm::vec3(0, (rand() % 360), 0));// rotation.y = (rand() % 360);
 		double scale = ((rand() % 1000) / 1000.0) * 1.0 + 0.6;
 		obj->transform.scale.y = ((rand() % 1000) / 1000.0) * 1.0 + 1.0;
 
@@ -182,8 +182,8 @@ int main()
 	
 	std::shared_ptr<Gun> gun(new Gun(0.05, portalGunMesh, &UI));
 	gun->relative.position = glm::vec3(0, 0.5, -0.5);
-	gun->relative.rotation.y = 0;
-	gun->relative.rotation.x = -10;
+	gun->relative.setRotation(glm::vec3(-1, 0, 0));// = 0;
+//	gun->relative.rotation.x = -10;
 	double gunScale = 0.1;
 	//gun->transform.scale = glm::vec3(gunScale);
 	//gun->transform.position = glm::vec3(0, 0, 0);
@@ -310,7 +310,7 @@ int main()
 				proj->setPosition(glm::vec3(0,3,0));
 				Physics::addPhysicsBody(proj);
 				*/
-				glm::vec3 direction = Transform::getTransformedZ(player->lookRotation);// +glm::vec3(Gen::random() * 60, Gen::random() * 60, Gen::random() * 60));
+				glm::vec3 direction = Transform::getTransformedZ(player->lookRotation.rotationMatrix);// +glm::vec3(Gen::random() * 60, Gen::random() * 60, Gen::random() * 60));
 
 				std::shared_ptr<Entity> ball(new Entity(0.0, ballMesh, &UI));
 				ball->mesh = ballMesh;
@@ -341,7 +341,7 @@ int main()
 		portal1->transform.rotation.y += 60 * UI.deltaTime;
 		*/
 
-		Audio::configureListener(player->getPosition(), player->lookRotation);
+		Audio::configureListener(player->getPosition(), glm::vec3(0, 0, 0));// player->lookRotation.rotationMatrix);
 
 		if (updateToggle)
 			land->update();

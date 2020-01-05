@@ -116,7 +116,7 @@ void Portal::portalRender(Camera camera, int width, int height)
 	//get distance from the viewer to the plane of the portal, perpedicular to the direction... so closest point.
 
 	glm::vec3 portalVertex = this->transform.position;
-	float minZ = distanceToPlane(camera.position, Transform::getTransformedZ(camera.rotation), portalVertex);// fmax((getMinZ(camera) - radius), 0.1f);
+	float minZ = distanceToPlane(camera.position, Transform::getTransformedZ(camera.rotationMatrix), portalVertex);// fmax((getMinZ(camera) - radius), 0.1f);
 //	float minZA = fmax((getMinZ(camera) - radius), 0.1f);
 
 	minZ = fmax(0.0, minZ - 0.5);
@@ -128,7 +128,7 @@ void Portal::portalRender(Camera camera, int width, int height)
 
 	portalCamera.position = otherPortal->transform.position + (camera.position - this->transform.position);
 
-	portalCamera.rotation = camera.rotation;
+	portalCamera.rotationMatrix = camera.rotationMatrix;
 
 	//glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
 //	glBindTextureUnit(0, renderTexture.colTex);

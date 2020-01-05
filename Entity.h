@@ -36,7 +36,7 @@ public:
 
 	UIManager * UI;
 	glm::vec3 vel;
-	glm::vec3 lookRotation;
+	Transform lookRotation;
 	bool colliding;
 	bool floorColliding;
 	bool roofColliding;
