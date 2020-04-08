@@ -27,8 +27,6 @@ public:
 	void loadInt(int location, int value);
 
 	void loadVector(int location, glm::vec3 vector);
-	void loadVector(int location, glm::vec4 vector);
-	void loadVector(int location, glm::vec2 vector);
 
 	void loadBoolean(int location, bool value);
 
@@ -38,15 +36,13 @@ public:
 
 	void loadMatrix(int location, glm::mat3 matrix);
 
-	void loadArray(int location, std::vector<GLfloat> data);
-
 	GLuint programID;
 };
 
 class ColorShader : public Shader
 {
 public:
-	int mvp, nm, cm, light_loc;
+	int mvp, mv, nm, cm, light_loc;
 	glm::mat4 colorMatrix;
 	glm::vec3 light;
 	ColorShader();
@@ -56,13 +52,13 @@ public:
 
 	void setLight(glm::vec3 light);
 	void setLightInternal(glm::vec3 light);
-	void setMatrixes(glm::mat4 MVP, glm::mat4 NM, glm::mat4 colorMatrix = glm::mat4(1.0));
+	void setMatrixes(glm::mat4 MVP, glm::mat4 MV, glm::mat4 NM, glm::mat4 colorMatrix = glm::mat4(1.0));
 };
 
 class TextureShader : public Shader
 {
 public:
-	int mvp, nm, light_loc, texLoc;
+	int mvp, mv, nm, light_loc, texLoc;
 	glm::mat4 colorMatrix;
 	glm::vec3 light;
 	TextureShader();
@@ -72,5 +68,5 @@ public:
 	void setTexture(std::shared_ptr<Texture> texture);
 	void setLight(glm::vec3 light);
 	void setLightInternal(glm::vec3 light);
-	void setMatrixes(glm::mat4 MVP, glm::mat4 NM);
+	void setMatrixes(glm::mat4 MVP, glm::mat4 MV, glm::mat4 NM);
 };

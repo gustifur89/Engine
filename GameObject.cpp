@@ -9,12 +9,12 @@ GameObject::GameObject()
 	persistentVisible = false;
 }
 
-void GameObject::renderFunc(Camera& camera)
+void GameObject::renderFunc(Camera& camera, glm::mat4 parentTransform)
 {
 	//no nothing
 }
 
-void GameObject::renderShadow(std::vector<std::shared_ptr<Light>> lights, std::shared_ptr<Shader> ShadowShader, int location)
+void GameObject::renderShadow(std::vector<std::shared_ptr<Light>> lights, std::shared_ptr<Shader> ShadowShader, int location, glm::mat4 parentTransform)
 {
 	if (!this || !visible) return;
 	///*
@@ -22,20 +22,28 @@ void GameObject::renderShadow(std::vector<std::shared_ptr<Light>> lights, std::s
 	{
 		if (Light::isBoxInListView(mesh->bounds, this->transform.getTransform(), lights))
 		{
-			this->renderShadowFunc(ShadowShader, location);
+			this->renderShadowFunc(ShadowShader, location, parentTransform);
 		}
 	}
 	//*/
 	//this->renderShadowFunc(ShadowShader, location);
 	for (int i = 0; i < children.size(); i++)
 	{
-		children[i]->renderShadow(lights, ShadowShader, location);
+		children[i]->renderShadow(lights, ShadowShader, location, parentTransform * this->transform.getTransform());
 	}
 }
 
-void GameObject::renderShadowFunc(std::shared_ptr<Shader> ShadowShader, int location)
+void GameObject::renderShadowFunc(std::shared_ptr<Shader> ShadowShader, int location, glm::mat4 parentTransform)
 {
-	//do nothing
+	glm::mat4 MVmatrix = parentTransform * transform.getTransform();
+	//std::cout << "yeet?\n";
+	if (ShadowShader && mesh)
+	{
+		//	std::cout << "meat?\n";
+		//	std::cout << location << "\n";
+		ShadowShader->loadMatrix(location, MVmatrix);
+		mesh->render();
+	}
 }
 
 Bounds GameObject::getWorldSpaceBounds()
@@ -53,33 +61,33 @@ Bounds GameObject::getWorldSpaceBounds()
 	return Bounds();
 }
 
-void GameObject::render(Camera& camera)
+void GameObject::render(Camera& camera, glm::mat4 parentTransform)
 {
 	if (!this || !visible) return;
 //	this->renderFunc(camera);
 	///*
 	if (mesh)
 	{
-		if (camera.isBoxInView(mesh->bounds, this->transform.getTransform()))
+		if (camera.isBoxInView(mesh->bounds, parentTransform * this->transform.getTransform()))
 		{
-			this->renderFunc(camera);
+			this->renderFunc(camera, parentTransform);
 		}
 		else if (this->persistentVisible)
 		{
 		//	std::cout << " Draw\n";
-			this->renderFunc(camera);
+			this->renderFunc(camera, parentTransform);
 		}
 	}
 	else if (this->persistentVisible)
 	{
-		this->renderFunc(camera);
+		this->renderFunc(camera, parentTransform);
 	}
 	//*/
 	//this->renderFunc(camera);
 
 	for (int i = 0; i < children.size(); i++)
 	{
-		children[i]->render(camera);
+		children[i]->render(camera, parentTransform * this->transform.getTransform());
 	}
 }
 
@@ -109,11 +117,11 @@ void GameObjectColor::setFillColor(int r, int g, int b)
 	colorMatrix[3][3] = 1.0f;
 }
 
-void GameObjectColor::renderFunc(Camera& camera)
+void GameObjectColor::renderFunc(Camera& camera, glm::mat4 parentTransform)
 {
-	glm::mat4 MVPmatrix = camera.getProjection() * camera.getTransform() * transform.getTransform();
-	glm::mat4 NMmatrix = camera.getTransform() * transform.getTransform();  // glm::transpose(glm::inverse(transform.getTransform()));
-	
+	glm::mat4 MVMatrix = camera.getTransform() * parentTransform * transform.getTransform();
+	glm::mat4 MVPmatrix = camera.getProjection() * MVMatrix;
+	glm::mat4 NMmatrix = glm::transpose(glm::inverse(MVMatrix));
 	//IS NM is now frm mesh to view space!!
 																			
 	/*
@@ -137,11 +145,12 @@ void GameObjectColor::renderFunc(Camera& camera)
 	{
 		shader->useShader();
 		shader->setLightInternal(shader->light);
-		shader->setMatrixes(MVPmatrix, NMmatrix, colorMatrix);
+		shader->setMatrixes(MVPmatrix, MVMatrix, NMmatrix, colorMatrix);
 		mesh->render();
 	}
 }
 
+/*
 void GameObjectColor::renderShadowFunc(std::shared_ptr<Shader> ShadowShader, int location)
 {
 	glm::mat4 MVmatrix = transform.getTransform();
@@ -154,6 +163,7 @@ void GameObjectColor::renderShadowFunc(std::shared_ptr<Shader> ShadowShader, int
 		mesh->render();
 	}
 }
+*/
 
 GameObjectColor::~GameObjectColor()
 {
@@ -167,21 +177,23 @@ GameObjectTexture::GameObjectTexture()
 
 }
 
-void GameObjectTexture::renderFunc(Camera& camera)
+void GameObjectTexture::renderFunc(Camera& camera, glm::mat4 parentTransform)
 {
-	glm::mat4 MVPmatrix = camera.getProjection() * camera.getTransform() * transform.getTransform();
-	glm::mat4 NMmatrix = camera.getTransform() * transform.getTransform();
-	
+	glm::mat4 MVMatrix = camera.getTransform() * parentTransform * transform.getTransform();
+	glm::mat4 MVPmatrix = camera.getProjection() * MVMatrix;
+	glm::mat4 NMmatrix = glm::transpose(glm::inverse(MVMatrix));
+
 	if (shader && mesh && texture)
 	{
 		shader->useShader();
 		shader->setLightInternal(shader->light);
 		shader->setTexture(texture);
-		shader->setMatrixes(MVPmatrix, NMmatrix);
+		shader->setMatrixes(MVPmatrix, MVMatrix, NMmatrix);
 		mesh->render();
 	}
 }
 
+/*
 void GameObjectTexture::renderShadowFunc(std::shared_ptr<Shader> shader, int location)
 {
 	glm::mat4 MVmatrix = transform.getTransform();
@@ -191,6 +203,7 @@ void GameObjectTexture::renderShadowFunc(std::shared_ptr<Shader> shader, int loc
 		mesh->render();
 	}
 }
+*/
 
 GameObjectTexture::~GameObjectTexture()
 {

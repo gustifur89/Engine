@@ -12,12 +12,17 @@ private:
 	double dotFace(std::shared_ptr<Triangle> face);
 	std::vector<std::shared_ptr<Triangle>> getColliableFaces(std::vector<std::shared_ptr<Triangle>> faces);
 public:
+	enum LOOK_MODE
+	{
+		FPS,
+		FLY
+	};
 	Entity(float radius, std::shared_ptr<Mesh> mesh, UIManager * UI, bool slidable = false);
 	~Entity();
 
 	void move(std::shared_ptr<CollisionStructure> collisionStructure);
 	void move();
-	void renderFunc(Camera& camera);
+	void renderFunc(Camera& camera, glm::mat4 parentTransform);
 	void updateCamera(Camera & camera, double upPercent);
 	static void entityBounds(std::vector<std::shared_ptr<Entity>> entities);
 	
@@ -36,7 +41,7 @@ public:
 
 	UIManager * UI;
 	glm::vec3 vel;
-	Transform lookRotation;
+	glm::vec3 lookRotation;
 	bool colliding;
 	bool floorColliding;
 	bool roofColliding;
@@ -44,6 +49,7 @@ public:
 	bool slidable;
 	int testName;
 	float radius;
+	LOOK_MODE looking;
 };
 
 class Holdable : public Entity

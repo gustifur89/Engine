@@ -4,9 +4,16 @@
 
 Mesh::Mesh()
 {
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
-//	vaos.push_back(VertexArrayID);
+	//THIS IS SO YOU CAN MAKE MESHES OUTSIDE OF CONTEXT
+	hasBound = false;
+	if (glfwGetCurrentContext())
+	{
+		//active context.
+		hasBound = true;
+		setUpVAO();
+	}
+	
+	//	vaos.push_back(VertexArrayID);
 	indexCount = 0;
 	numVBOs = 0;
 }
@@ -16,6 +23,12 @@ Mesh::~Mesh()
 	glDeleteVertexArrays(1, &VertexArrayID);
 	glDeleteBuffers(1, &elementbufferID);
 	glDeleteBuffers(bufferIDs.size(), &bufferIDs[0]);
+}
+
+void Mesh::setUpVAO()
+{
+	glGenVertexArrays(1, &VertexArrayID);
+	glBindVertexArray(VertexArrayID);
 }
 
 void Mesh::bindVAO()
@@ -65,6 +78,8 @@ void Mesh::recalculateBounds()
 
 void Mesh::bindArrays()
 {
+//	glGenVertexArrays(1, &VertexArrayID);
+//	glBindVertexArray(VertexArrayID);
 }
 
 void Mesh::bindIndexVBO(std::vector<GLuint> indexes)
@@ -441,7 +456,7 @@ std::shared_ptr<ColorMesh> ColorMesh::loadFromFile(std::string fileName)
 		return std::shared_ptr<ColorMesh>(NULL);
 	}
 	std::shared_ptr<ColorMesh> mesh(new ColorMesh());
-	
+
 	std::string line;
 
 	int vertex_number = 0;
@@ -662,7 +677,7 @@ void ColorMesh::recolorMesh(std::shared_ptr<ColorMesh> mesh, int r, int g, int b
 	mesh->bindVertexAttribVBO(2, 3, mesh->colorBuffer);
 }
 
-void ColorMesh::bindArrays()
+void ColorMesh::bindArrays()  
 {
 	this->bindIndexVBO(this->indexBuffer);
 	this->bindVertexAttribVBO(0, 3, this->vertexBuffer);
@@ -719,7 +734,7 @@ std::shared_ptr<ColorMesh> ColorMesh::triangle()
 	return mesh;
 }
 
-std::shared_ptr<ColorMesh> ColorMesh::meshFromTriangles(std::vector<std::shared_ptr<Triangle>> faces, int r, int g, int b)
+std::shared_ptr<ColorMesh> ColorMesh::meshFromTriangles(std::vector<std::shared_ptr<Triangle>> & faces, int r, int g, int b)
 {
 	std::shared_ptr<ColorMesh> mesh = meshFromTrianglesUnbound(faces, r, g, b);
 	mesh->bindArrays();
@@ -727,7 +742,7 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromTriangles(std::vector<std::shared_
 	return mesh;
 }
 
-std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::shared_ptr<Triangle>> faces, int r, int g, int b)
+std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::shared_ptr<Triangle>> & faces, int r, int g, int b)
 {
 	std::shared_ptr<ColorMesh> mesh(new ColorMesh());
 	float r_ = r / 255.f;
@@ -816,6 +831,44 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::
 		}
 		*/
 
+		
+		int randVal = 0;// rand() % 8 - 4;
+
+		r_ = (64 + randVal) / 255.f;
+		g_ = (61 + randVal) / 255.f;
+		b_ = (53 + randVal) / 255.f;
+
+
+		/*
+		if (dot > 0.2)
+		{
+			//grass
+
+			r_ = (129) / 255.f;
+			g_ = (108) / 255.f;
+			b_ = (88) / 255.f;
+
+		}
+		else if (dot > -0.1)
+		{
+			//rock
+
+			r_ = (101) / 255.f;
+			g_ = (88) / 255.f;
+			b_ = (76) / 255.f;
+
+		}
+		else
+		{
+			//under rock
+
+			r_ = (78) / 255.f;
+			g_ = (70) / 255.f;
+			b_ = (62) / 255.f;
+		}
+		*/
+
+		/* GOOD WITH HSV
 		if (dot < 0.0)
 		{
 			r_ = (120) / 255.f;
@@ -843,6 +896,7 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::
 			g_ = (110) / 255.f;
 			b_ = (122) / 255.f;
 		}
+		*/
 	
 		//	std::cout << "mesh from triangles\n";
 		//	std::cout << faces[i]->p1.x << "\t" << faces[i]->p1.y << "\t" << faces[i]->p1.z << "\n";
@@ -895,7 +949,7 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromTrianglesUnbound(std::vector<std::
 	return mesh;
 }
 
-std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector<std::vector<bool>>> grid, Bounds bounds, int r, int g, int b)
+std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector<std::vector<bool>>> & grid, Bounds & bounds, int r, int g, int b)
 {
 	// maybe make a more general MESHDATA class. That has general info. Like just the arrays. That way you can recolor and shit.
 	// MeshData has the Vertex List and Face List...  maybe....
@@ -963,7 +1017,7 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector
 	return meshFromTriangles(faces, r, g, b);
 }
 
-std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector<double>> grid, Bounds bounds, int r, int g, int b)
+std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector<double>> & grid, Bounds & bounds, int r, int g, int b)
 {
 	// maybe make a more general MESHDATA class. That has general info. Like just the arrays. That way you can recolor and shit.
 	// MeshData has the Vertex List and Face List...  maybe....
@@ -1039,7 +1093,7 @@ std::shared_ptr<ColorMesh> ColorMesh::meshFromVertexGrid(std::vector<std::vector
 	return meshFromTriangles(faces, r, g, b);
 }
 
-std::shared_ptr<ColorMesh> ColorMesh::applyMatrixToMesh(std::shared_ptr<ColorMesh> mesh, glm::mat4 matrix)
+std::shared_ptr<ColorMesh> ColorMesh::applyMatrixToMesh(std::shared_ptr<ColorMesh> & mesh, glm::mat4 matrix)
 {
 	std::vector<std::shared_ptr<Triangle>> triangles = mesh->toTriangles(matrix);
 	

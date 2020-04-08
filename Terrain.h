@@ -56,7 +56,7 @@ public:
 	void makeChunk(double x, double z);
 	std::shared_ptr<Chunk> generateChunk(glm::vec2 pos, std::pair<double, double> point);
 	void update();
-	void renderFunc(Camera& camera);
+	void renderFunc(Camera& camera, glm::mat4 parentTransform);
 	void setTarget(std::shared_ptr<Entity> ent);
 	bool ground(double x, double y, double z);
 	double ground(double x, double z);

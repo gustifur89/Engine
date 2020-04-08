@@ -14,21 +14,21 @@
 #include <thread>
 #include <queue>
 #include <stack>
-#include <unordered_set>
 
 #include <GL/glew.h>
 
 
 #include <GLFW/glfw3.h>
 
+#define GLM_FORCE_SWIZZLE 
 #include <glm/glm.hpp>
+#include <glm/gtx/vec_swizzle.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/common.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/euler_angles.hpp>
 
 #include "PerlinNoise.hpp"
 
@@ -42,5 +42,14 @@ public:
 	static double random()
 	{
 		return ((rand() % 100000) / 100000.0);
+	}
+
+	static void checkGLError()
+	{
+		GLenum err;
+		while ((err = glGetError())) {
+			std::cout << err << "\n";
+		}
+
 	}
 };

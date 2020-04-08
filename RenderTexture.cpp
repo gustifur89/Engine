@@ -190,6 +190,8 @@ SSAOTexture::SSAOTexture(int width, int height)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, aoTexture, 0);
 
@@ -203,7 +205,7 @@ SSAOTexture::SSAOTexture(int width, int height)
 	///Random noise texture
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 - 1.0
 	std::default_random_engine generator;
-	double sampleSize = 16;
+	double sampleSize = 64;
 	for (unsigned int i = 0; i < sampleSize; ++i)
 	{
 		glm::vec3 sample(
@@ -212,14 +214,14 @@ SSAOTexture::SSAOTexture(int width, int height)
 			randomFloats(generator) * 2.0 - 1.0
 			//1
 		
-			//randomFloats(generator) * 2.0 - 1.0
-			//randomFloats(generator) * 1.2 - 0.2
+			//randomFloats(generator) * 2.0 - 1.0,
+			//randomFloats(generator) * 2.0 - 1.0,
 			//randomFloats(generator)
 		);
 		sample = glm::normalize(sample);
-		sample *= randomFloats(generator);
-		float scale = (float)i / sampleSize;
-	//	scale = Geometry::lerp(0.1f, 1.0f, scale * scale);
+	//	sample *= randomFloats(generator);
+		float scale = (float) i / sampleSize;
+		scale = Geometry::lerp(0.1f, 1.0f, scale * scale);
 		sample *= scale;
 		ssaoKernel.push_back(sample);
 	}

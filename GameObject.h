@@ -14,11 +14,11 @@ public:
 
 	void addChild(std::shared_ptr<GameObject> gameObject);
 
-	void render(Camera& camera);
-	virtual void renderFunc(Camera& camera);
+	void render(Camera& camera, glm::mat4 parentTransform);
+	virtual void renderFunc(Camera& camera, glm::mat4 parentTransform);
 
-	void renderShadow(std::vector<std::shared_ptr<Light>> lights, std::shared_ptr<Shader> shader, int location);
-	virtual void renderShadowFunc(std::shared_ptr<Shader> shader, int location);
+	void renderShadow(std::vector<std::shared_ptr<Light>> lights, std::shared_ptr<Shader> shader, int location, glm::mat4 parentTransform);
+	void renderShadowFunc(std::shared_ptr<Shader> shader, int location, glm::mat4 parentTransform);
 
 	Bounds getWorldSpaceBounds();
 
@@ -49,8 +49,8 @@ public:
 	glm::mat4 colorMatrix;
 	
 	void setFillColor(int r, int g, int b);
-	void renderFunc(Camera& camera);
-	void renderShadowFunc(std::shared_ptr<Shader> shader, int location);
+	void renderFunc(Camera& camera, glm::mat4 parentTransform);
+	//void renderShadowFunc(std::shared_ptr<Shader> shader, int location);
 	std::shared_ptr<ColorShader> shader;
 };
 
@@ -60,8 +60,8 @@ public:
 	GameObjectTexture();
 	~GameObjectTexture();
 
-	void renderFunc(Camera& camera);
-	void renderShadowFunc(std::shared_ptr<Shader> shader, int location);
+	void renderFunc(Camera& camera, glm::mat4 parentTransform);
+//	void renderShadowFunc(std::shared_ptr<Shader> shader, int location);
 
 	std::shared_ptr<Texture> texture;
 	std::shared_ptr<TextureShader> shader;

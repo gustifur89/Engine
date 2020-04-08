@@ -12,17 +12,13 @@ class Portal : public GameObjectColor
 {
 private:
 	double distanceToPlane(glm::vec3 entPos, glm::vec3 dir, glm::vec3 planePoint);
-
-	static GLuint radiusLoc;
-	static GLuint portalUVLoc;
-	static GLuint factorLoc;
 public:
 	Portal();
 	Portal(int width, int height);
 	~Portal();
 
 	void setWorld(std::shared_ptr<GameObject> world);
-	void renderFunc(Camera& camera);
+	void renderFunc(Camera& camera, glm::mat4 parentTransform);
 	void portalRender(Camera camera, int width, int height);
 	float getMinZ(Camera camera);
 	void setRadius(float radius);

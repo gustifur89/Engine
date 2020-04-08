@@ -17,8 +17,7 @@ public:
 	glm::vec3 impulsePoint;
 	glm::vec3 impulse;
 	glm::vec3 force;
-
-	float mass;
+	
 	bool locked;
 	float friction;
 	float elasticity;
@@ -54,7 +53,6 @@ public:
 	static void addPhysicsBody(std::shared_ptr<PhysicsBody> physicsBody);
 	static std::vector<std::shared_ptr<PhysicsBody>> physicsBodyList;
 	static std::vector<std::shared_ptr<Collider>> colliderList;
-	static std::shared_ptr<infiniteColliderGrid> colliderGrid;
 	static std::vector<std::shared_ptr<CollisionStructure>> collisionStructureList;
 	static std::stack<Collision> collisions;
 };

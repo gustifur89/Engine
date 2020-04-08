@@ -38,6 +38,7 @@ protected:
 	GLuint ssaoTexLoc;
 	GLuint numShadowLoc;
 	GLuint VSMatLoc;
+	GLuint invVSMatLoc;
 
 	GLuint shadowsSSBOID;
 	GLuint shadowMatrixLoc;
@@ -67,6 +68,8 @@ protected:
 	bool useSobel;
 	bool useComic;
 	int numShadows;
+
+	glm::vec3 internalLightDirection;
 
 	std::shared_ptr<Texture> comicShadingTexture;
 

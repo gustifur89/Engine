@@ -37,25 +37,13 @@ void Collider::collision(std::shared_ptr<Collider> collider, std::stack<Collisio
 
 	if (distance <= 0.001) return;
 
-	if (distance <= this->radius + collider->radius && distance > fmin(this->radius, collider->radius))
+	if (distance <= this->radius + collider->radius)
 	{
-		//http://hyperphysics.phy-astr.gsu.edu/hbase/colsta.html
-		float p1 = 0.0;
-		float p2 = 0.0;
-		
-		if (collider->locked)
-		{
-			p1 = -1.0f;
-		}
-		else
-		{
-			p1 = (this->physicsBody->mass - collider->physicsBody->mass) / (this->physicsBody->mass + collider->physicsBody->mass);
-			p2 = (2.0 * collider->physicsBody->mass) / (this->physicsBody->mass + collider->physicsBody->mass);
-		}
-		
+		float lockedCorrection = (this->locked | collider->locked) ? 1.0f : 0.5f;
+
 		float rectify = (this->radius + collider->radius) - distance;
 
-		glm::vec3 momentumCorrection = p1 * this->velocity + p2 * collider->velocity;
+		glm::vec3 relVelocity = this->velocity - collider->velocity;
 
 		//position is the center. Normal is the direction from the other ball to this ball
 		glm::vec3 normal = glm::normalize(this->transform.position - collider->transform.position);
@@ -77,8 +65,7 @@ void Collider::collision(std::shared_ptr<Collider> collider, std::stack<Collisio
 
 		//Collision nCollision(position, normal, this->physicsBody);
 		//nCollision.impulse = bothOffset * (-projVelocity + rectifyingDistance);
-		//Collision nCollision(position, normal, relVelocity, rectify, momentumCorrection, this->physicsBody);
-		Collision nCollision(position, normal, momentumCorrection, rectify, this->physicsBody);
+		Collision nCollision(position, normal, relVelocity, rectify, lockedCorrection, this->physicsBody);
 		collisions.push(nCollision);
 
 		//if(!this->locked)
@@ -139,44 +126,10 @@ void Collider::collision(std::shared_ptr<CollisionStructure> collisionStructure,
 		this->collision(faces[i], tempStack);
 	}
 
-	//maybe find the center of mass... 
-	//then find the distance to center of mass...
-	
-	/*
-	if (tempStack.size() > 0)
-	{
-		glm::vec3 relVel = tempStack.top().relVelocity;
-		glm::vec3 pos(0);
-		float size = 1.0f / tempStack.size();
-		while (tempStack.size() > 0)
-		{
-			pos += tempStack.top().position;
-			tempStack.pop();
-		}
-
-		pos = size * pos;
-
-		glm::vec3 normal = this->transform.position - pos;
-		float distance = this->radius - glm::length(normal);
-		normal = glm::normalize(normal);
-
-		Collision nCollision(pos, normal, relVel, distance, 1.0f, this->physicsBody);
-		collisions.push(nCollision);
-	}
-	//*/
-
 	//Now we need to do grahm-schmidt on the results to avoid double counting and stuff. It caused errors where balls would just bounce off of meshes.
-	//There is only one true collision from a mesh, so we need to add the individual in a smart way (graham)
-	//assume position is just the center of it.
-	//relative velocity should be the same
 
-	//We need to use the method on rectify * norm. That way it weights for other stuff. I think. Then split it back up.
-	while (tempStack.size() > 0)
-	{
-		collisions.push(tempStack.top());
-		tempStack.pop();
-	}
-	return;
+
+
 
 	/*
 	float distance = glm::length(this->transform.position - collider->transform.position);
@@ -210,56 +163,6 @@ void Collider::collision(std::shared_ptr<CollisionStructure> collisionStructure,
 
 void Collider::collision(std::shared_ptr<Triangle> triangle, std::stack<Collision>& collisions)
 {
-	/*
-	if (true || OctTree::distanceToPlane(shared_from_this(), triangle))//distanceToTriangle
-	{
-		//see if close. collide off of it's normal;
-		glm::vec3 relVelocity = this->velocity;
-
-		float distance = OctTree::distanceToPlane(shared_from_this(), triangle);
-
-		glm::vec3 normal = triangle->normal;
-
-		glm::vec3 pos = this->transform.position - distance * normal;
-
-		Collision nCollision(pos, normal, relVelocity, this->radius - distance, 1.0f, this->physicsBody);
-		collisions.push(nCollision);
-	}
-	//*/
-
-	///*
-	//This is known, Can skip... probabl
-	if (true || OctTree::boundingBox(shared_from_this(), triangle))
-	{
-		glm::vec3 relVelocity = this->velocity;
-		std::pair<bool, glm::vec3> position = OctTree::getClosestPointInTriangle(shared_from_this(), triangle);
-		if (position.first)
-		{
-			glm::vec3 normal = this->transform.position - position.second;
-			float distance = glm::length(normal);
-			if (distance <= this->radius)
-			{
-				normal = glm::normalize(normal);
-
-				float p1 = 0.0;
-				float p2 = 0.0;
-				
-				p1 = -1.0f;
-
-				glm::vec3 momentumCorrection = p1 * this->velocity;// +p2 * collider->velocity;
-
-				Collision nCollision(position.second, normal, momentumCorrection, this->radius - distance, this->physicsBody);
-				collisions.push(nCollision);
-
-			//	Collision nCollision(position.second, normal, relVelocity, distance, 1.0f, this->physicsBody);
-			//	collisions.push(nCollision);
-			}
-		}
-	}
-	//*/
-
-	/*
-	//This isn't the best. Need to do more specific.
 	float distance = OctTree::distanceToTriangle(shared_from_this(), triangle);//self
 
 	float rectify = (this->radius) - distance;
@@ -270,14 +173,31 @@ void Collider::collision(std::shared_ptr<Triangle> triangle, std::stack<Collisio
 	glm::vec3 normal = triangle->normal;
 	glm::vec3 position = this->transform.position - distance * normal;
 
+	/*
+	float dot = glm::dot(normal, relVelocity);
+	glm::vec3 projVelocity = dot < 0 ? dot * normal : glm::vec3(0);
+
+	//impulse should cancel the velocity into the object and offset back out of object
+	glm::vec3 rectifyingDistance = rectify * normal;
+
+	//	this->physicsBody->applyImpulse(bothOffset * (-projVelocity + rectifyingDistance), glm::vec3(0, 0, 0));
+	*/
+
 	//Collision nCollision(position, normal, this->physicsBody);
 	Collision nCollision(position, normal, relVelocity, rectify, 1.0f, this->physicsBody);
 	//nCollision.impulse = (-projVelocity + rectifyingDistance);
 	collisions.push(nCollision);
-	//*/
 }
 
 //============================== CollisionStructure ================================
+
+CollisionStructure::CollisionStructure()
+{
+}
+
+CollisionStructure::~CollisionStructure()
+{
+}
 
 // ===================================== OctTree =======================================
 
@@ -420,109 +340,6 @@ double OctTree::distanceToTriangle(std::shared_ptr<Collider> collider, std::shar
 			glm::length(ac*glm::clamp(dot(ac, pc) / glm::length2(ac), 0.0f, 1.0f) - pc))
 		:
 		glm::dot(nor, pa)*glm::dot(nor, pa) / glm::length2(nor));
-}
-
-std::pair<bool, glm::vec3> OctTree::getClosestPointInTriangle(std::shared_ptr<Collider> collider, std::shared_ptr<Triangle> triangle)
-{
-	//assume we know it collides
-	std::pair<bool, glm::vec3> trianglePos = getClosestPoint(triangle, collider);
-	std::pair<bool, glm::vec3> l1Pos = getClosestPoint(triangle->p1, triangle->p2, collider);
-	std::pair<bool, glm::vec3> l2Pos = getClosestPoint(triangle->p2, triangle->p3, collider);
-	std::pair<bool, glm::vec3> l3Pos = getClosestPoint(triangle->p3, triangle->p1, collider);
-	std::pair<bool, glm::vec3> out(false, glm::vec3());
-	float smallestLength = -1;
-	if (trianglePos.first)
-	{
-		//valid collision
-		float length = glm::length(trianglePos.second - collider->transform.position);
-		if (smallestLength == -1 || length < smallestLength)
-		{
-			smallestLength = length;
-			out = trianglePos;
-		}
-	}
-
-	if (l1Pos.first)
-	{
-		//valid collision
-		float length = glm::length(l1Pos.second - collider->transform.position);
-		if (smallestLength == -1 || length < smallestLength)
-		{
-			smallestLength = length;
-			out = l1Pos;
-		}
-	}
-
-	if (l2Pos.first)
-	{
-		//valid collision
-		float length = glm::length(l2Pos.second - collider->transform.position);
-		if (smallestLength == -1 || length < smallestLength)
-		{
-			smallestLength = length;
-			out = l2Pos;
-		}
-	}
-
-	if (l3Pos.first)
-	{
-		//valid collision
-		float length = glm::length(l3Pos.second - collider->transform.position);
-		if (smallestLength == -1 || length < smallestLength)
-		{
-			smallestLength = length;
-			out = l3Pos;
-		}
-	}
-
-	return out;
-}
-
-std::pair<bool, glm::vec3> OctTree::getClosestPoint(glm::vec3 A, glm::vec3 B, std::shared_ptr<Collider> collider)
-{
-	//assume we know it collides
-	glm::vec3 D = collider->transform.position;
-	glm::vec3 AB = B - A;
-	glm::vec3 AD = D - A;
-	double t = glm::dot(AD, AB) / glm::dot(AB, AB);
-	if (t >= 0.0 && t <= 1.0)
-	{
-		glm::vec3 P = A + (float)t * AB;
-		return std::pair<bool, glm::vec3>(true, P);
-	}
-	return std::pair<bool, glm::vec3>(false, glm::vec3());
-}
-
-std::pair<bool, glm::vec3> OctTree::getClosestPoint(std::shared_ptr<Triangle> triangle, std::shared_ptr<Collider> collider)
-{
-	//assume we know it collides
-	double t = 0.0;
-	double s = 0.0;
-	glm::vec3 A = triangle->p1;
-	glm::vec3 B = triangle->p2;
-	glm::vec3 C = triangle->p3;
-	glm::vec3 D = collider->transform.position;
-
-	glm::vec3 AB = B - A;
-	glm::vec3 AC = C - A;
-	glm::vec3 AD = D - A;
-
-	double a = glm::length2(AB);
-	double b = glm::dot(AC, AB);
-	double c = glm::dot(AD, AB);
-
-	double d = glm::dot(AB, AC);
-	double e = glm::length2(AC);
-	double f = glm::dot(AD, AC);
-
-	solveSystem(a, b, c, d, e, f, &t, &s);
-	if (t >= 0.0 && s >= 0.0 && t + s <= 1.0)
-	{
-		//check distance now
-		glm::vec3 P = A + (float)t * AB + (float)s * AC;
-		return std::pair<bool, glm::vec3>(true, P);
-	}
-	return std::pair<bool, glm::vec3>(false, glm::vec3());
 }
 
 double OctTree::distanceToPlane(std::shared_ptr<Collider> collider, std::shared_ptr<Triangle> triangle)
@@ -692,10 +509,6 @@ void OctTree::build(std::shared_ptr<GameObject> gameObject, int depth, int maxTr
 	root = std::shared_ptr<OctTreeNode>(new OctTreeNode());
 	root->faces = faces;
 	root->bounds = Bounds::boundsFromTriangles(faces);
-	float max = fmax(root->bounds.high.x, fmax(root->bounds.high.y, root->bounds.high.z));
-	float min = fmax(root->bounds.low.x, fmax(root->bounds.low.y, root->bounds.low.z));
-//	root->bounds.high = glm::vec3(max);
-//	root->bounds.low = glm::vec3(min);
 	root->pos = glm::vec3(0.5*(root->bounds.low.x + root->bounds.high.x), 0.5*(root->bounds.low.y + root->bounds.high.y), 0.5*(root->bounds.low.z + root->bounds.high.z));
 	root->build(depth, maxTriangle);
 }
@@ -707,7 +520,7 @@ std::shared_ptr<ColorMesh> OctTree::combineMeshes(std::shared_ptr<GameObject> ga
 	return ColorMesh::meshFromTriangles(faces, r, g, b);
 }
 
-std::vector<std::shared_ptr<Triangle>> OctTree::collide_old(std::shared_ptr<Collider> collider)
+std::vector<std::shared_ptr<Triangle>> OctTree::collide(std::shared_ptr<Collider> collider)
 {
 	std::shared_ptr<OctTreeNode> ptr = root;
 	std::vector<std::shared_ptr<Triangle>> triangles;
@@ -728,331 +541,4 @@ std::vector<std::shared_ptr<Triangle>> OctTree::collide_old(std::shared_ptr<Coll
 		}
 	}
 	return triangles;
-}
-
-std::vector<std::shared_ptr<Triangle>> OctTree::collide(std::shared_ptr<Collider> collider)
-{
-	return nodeCollide(root, collider);
-}
-
-std::vector<std::shared_ptr<Triangle>> OctTree::nodeCollide(std::shared_ptr<OctTreeNode> node, std::shared_ptr<Collider> collider)
-{
-	std::vector<std::shared_ptr<Triangle>> triangles;
-	if (node->bounds.sphereBBInBounds(collider->transform.position, collider->radius))
-	{
-		if (node->leaf)
-		{
-			for (int i = 0; i < node->faces.size(); i++)
-			{
-				if (collideFace(collider, node->faces[i]))
-				{
-					triangles.push_back(node->faces[i]);
-				}
-			}
-		}
-		else
-		{
-			//keep on sliding...
-			for (int i = 0; i < 8; i++)
-			{
-				if (node->children[i])
-				{
-					std::vector<std::shared_ptr<Triangle>> region = nodeCollide(node->children[i], collider);
-					triangles.insert(std::end(triangles), std::begin(region), std::end(region));
-				}
-			}
-		}
-	}
-	return triangles;
-}
-
-// ========================== Grid ==================================
-
-//=========================== ColliderGrid ==========================
-
-ColliderGrid::ColliderGrid(Bounds bounds, glm::vec3 numCells)
-{
-	this->bounds = bounds;
-	this->numCells = glm::floor(numCells);
-	cellSize = (bounds.high - bounds.low) / numCells;
-	setGrid(this->numCells);
-}
-
-ColliderGrid::~ColliderGrid()
-{
-}
-
-std::vector<glm::vec3> ColliderGrid::getCellList(std::shared_ptr<Collider> collider)
-{
-	std::vector<glm::vec3> out;
-	
-	glm::vec3 gridPos = glm::floor(collider->transform.position / cellSize);
-	glm::vec3 gridRadius = glm::ceil(glm::vec3(collider->radius) / cellSize);
-
-	for (int x = gridPos.x - gridRadius.x; x <= gridPos.x + gridRadius.x; x++)
-	{
-		for (int y = gridPos.y - gridRadius.y; y <= gridPos.y + gridRadius.y; y++)
-		{
-			for (int z = gridPos.z - gridRadius.z; z <= gridPos.z + gridRadius.z; z++)
-			{
-				if (x >= 0 && x < numCells.x && y >= 0 && y < numCells.y && z >= 0 && z < numCells.z)
-				{
-					//test if box is in? Or just add and pray....
-					float d = Geometry::distanceFromBox(collider->transform.position, cellSize * glm::vec3(x + 0.5, y + 0.5, z + 0.5), 0.5f * cellSize);
-					if (d <= collider->radius)
-						out.push_back(glm::vec3(x, y, z));
-				}
-			}
-		}
-	}
-
-	/*
-	for (float x = pos.x - radius; x <= pos.x + radius; x += cellSize.x)
-	{
-		for (float y = pos.y - radius; y <= pos.y + radius; y += cellSize.y)
-		{
-			for (float z = pos.z - radius; z <= pos.z + radius; x += cellSize.z)
-			{
-				glm::vec3 cPos = cellSize * glm::floor((pos - glm::vec3(radius) + glm::vec3(x, y, z)) / cellSize);
-				if(cPos.x >= 0 && cPos.y >= 0 && cPos.z >= 0 && cPos.x < numCells.x && cPos.y < numCells.y && cPos.z < numCells.z)
-					out.push_back(cPos);
-			}
-		}
-	}
-	*/
-	return out;
-}
-
-void ColliderGrid::setGrid(glm::vec3 numCells)
-{
-	grid = std::vector < std::vector<std::vector<std::vector<std::shared_ptr<Collider>>>>>(numCells.x);
-	for (int i = 0; i < numCells.x; i++)
-	{
-		grid[i] = std::vector < std::vector<std::vector<std::shared_ptr<Collider>>>>(numCells.y);
-		for (int j = 0; j < numCells.y; j++)
-		{
-			grid[i][j] = std::vector<std::vector<std::shared_ptr<Collider>>>(numCells.z);
-			for (int k = 0; k < numCells.z; k++)
-			{
-				grid[i][j][k] = std::vector<std::shared_ptr<Collider>>();
-			}
-		}
-	}
-}
-
-void ColliderGrid::resetGrid()
-{
-	for (int i = 0; i < numCells.x; i++)
-	{
-		for (int j = 0; j < numCells.y; j++)
-		{
-			for (int k = 0; k < numCells.z; k++)
-			{
-				grid[i][j][k].clear();
-			}
-		}
-	}
-}
-
-void ColliderGrid::collideCell(glm::vec3 cell, std::shared_ptr<Collider> collider, std::stack<Collision>& collisions)
-{
-	for (int i = 0; i < grid[cell.x][cell.y][cell.z].size(); i++)
-	{
-		collider->collision(grid[cell.x][cell.y][cell.z][i], collisions);
-	}
-}
-
-bool ColliderGrid::addColliderToGrid(std::shared_ptr<Collider> collider)
-{
-	std::vector<glm::vec3> cellList = getCellList(collider);
-	for (int i = 0; i < cellList.size(); i++)
-	{
-		grid[cellList[i].x][cellList[i].y][cellList[i].z].push_back(collider);
-	}
-	if (cellList.size() > 0)
-	{
-		this->colliderList.push_back(collider);
-	}
-	return cellList.size() > 0;
-}
-
-std::vector<std::shared_ptr<Collider>> ColliderGrid::update()
-{
-	resetGrid();
-	std::vector<std::shared_ptr<Collider>> removed;
-	for (int i = 0; i < colliderList.size(); i++)
-	{
-		if (!this->addColliderToGrid(colliderList[i]))
-		{
-			removed.push_back(colliderList[i]);
-			colliderList.erase(colliderList.begin() + i);
-			i--;
-		}
-	}
-	return removed;
-}
-
-void ColliderGrid::collision(std::shared_ptr<Collider> collider, std::stack<Collision>& collisions)
-{
-	std::vector<glm::vec3> cells = getCellList(collider);
-	for (int i = 0; i < cells.size(); i++)
-	{
-		collideCell(cells[i], collider, collisions);
-	}
-}
-
-//=========================== ColliderGrid ==========================
-
-infiniteColliderGrid::infiniteColliderGrid(glm::vec3 cellSize)
-{
-	this->cellSize = cellSize;
-}
-
-infiniteColliderGrid::~infiniteColliderGrid()
-{
-}
-
-std::vector<std::tuple<int, int, int>> infiniteColliderGrid::getCellList(std::shared_ptr<Collider> collider)
-{
-	std::vector<std::tuple<int, int, int>> out;
-
-	glm::vec3 gridPos = glm::floor(collider->transform.position / cellSize);
-	glm::vec3 gridRadius = glm::ceil(glm::vec3(collider->radius) / cellSize);
-
-	for (int x = gridPos.x - gridRadius.x; x <= gridPos.x + gridRadius.x; x++)
-	{
-		for (int y = gridPos.y - gridRadius.y; y <= gridPos.y + gridRadius.y; y++)
-		{
-			for (int z = gridPos.z - gridRadius.z; z <= gridPos.z + gridRadius.z; z++)
-			{
-				float d = Geometry::distanceFromBox(collider->transform.position, cellSize * glm::vec3(x + 0.5, y + 0.5, z + 0.5), 0.5f * cellSize);
-				if (d <= collider->radius)
-					out.push_back(std::tuple<int, int, int>(x, y, z));
-			}
-		}
-	}
-
-	return out;
-}
-
-void infiniteColliderGrid::setGrid(glm::vec3 numCells)
-{
-
-}
-
-void infiniteColliderGrid::resetGrid()
-{
-
-}
-
-std::vector<std::shared_ptr<Collider>> infiniteColliderGrid::collideCell(std::tuple<int, int, int> cell, std::shared_ptr<Collider> collider, std::stack<Collision>& collisions)
-{
-	std::vector<std::shared_ptr<Collider>> out;
-	if (grid.find(cell) != grid.end())
-	{
-		int val = collisions.size();
-		for (int i = 0; i < grid[cell].size(); i++)
-		{
-			collider->collision(grid[cell][i], collisions);
-			int nVal = collisions.size();
-			if (nVal != val)
-			{
-				//did collide. Push back
-				val = nVal;
-				out.push_back(grid[cell][i]);
-			}
-		}
-	}
-	return out;
-}
-
-bool infiniteColliderGrid::addColliderAtIndex(std::tuple<int, int, int> cell, std::shared_ptr<Collider> collider)
-{
-	if (grid.find(cell) != grid.end())
-	{
-		grid[cell].push_back(collider);
-	}
-	else
-	{
-		grid[cell] = std::vector<std::shared_ptr<Collider>>();
-		grid[cell].push_back(collider);
-	}
-	return true;
-}
-
-bool infiniteColliderGrid::pushColliderToGrid(std::shared_ptr<Collider> collider)
-{
-	std::vector<std::tuple<int, int, int>> cellList = getCellList(collider);
-	for (int i = 0; i < cellList.size(); i++)
-	{
-		addColliderAtIndex(cellList[i], collider);
-	}
-	return true;
-}
-
-std::vector<std::shared_ptr<Collider>> infiniteColliderGrid::getCollidersInCell(std::tuple<int, int, int> cell)
-{
-	std::vector<std::shared_ptr<Collider>> out;
-	if (grid.find(cell) != grid.end())
-	{
-		out = grid[cell];
-	}
-	return out;
-}
-
-bool infiniteColliderGrid::addColliderToGrid(std::shared_ptr<Collider> collider)
-{
-	colliderList.push_back(collider);
-	return pushColliderToGrid(collider);
-}
-
-std::vector<std::shared_ptr<Collider>> infiniteColliderGrid::update()
-{
-/*	for (auto & p = grid.cbegin(); p != grid.cend(); p++)
-	{
-		
-	}*/
-	grid.clear();
-
-	for (int i = 0; i < colliderList.size(); i++)
-	{
-		this->pushColliderToGrid(colliderList[i]);
-	}
-
-	/*
-	for (auto p = grid.cbegin(); p != grid.cend();)
-	{
-		if()
-		{
-			grid.erase(p++);
-		}
-		else
-		{
-			p++
-		}
-	}*/
-
-	return std::vector<std::shared_ptr<Collider>>();
-}
-
-void infiniteColliderGrid::collision(std::shared_ptr<Collider> collider, std::stack<Collision>& collisions)
-{
-	std::vector<std::tuple<int, int, int>> cells = getCellList(collider);
-	std::vector<std::shared_ptr<Collider>> didCollide;
-	for (int i = 0; i < cells.size(); i++)
-	{
-		std::vector<std::shared_ptr<Collider>> result = getCollidersInCell(cells[i]);
-		didCollide.insert(std::end(didCollide), std::begin(result), std::end(result));
-	}
-	//go through and filter out all duplicates...
-	std::unordered_set<std::shared_ptr<Collider>> s;
-	for (std::shared_ptr<Collider> i : didCollide)
-		s.insert(i);
-	didCollide.assign(s.begin(), s.end());
-	std::sort(didCollide.begin(), didCollide.end());
-
-	for (int i = 0; i < didCollide.size(); i++)
-	{
-		collider->collision(didCollide[i], collisions);
-	}
 }

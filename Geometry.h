@@ -407,11 +407,6 @@ public:
 		}
 		return bounds;
 	}
-
-	bool sphereBBInBounds(glm::vec3 p, float radius)
-	{
-		return p.x + radius >= low.x && p.x - radius <= high.x && p.y + radius >= low.y && p.y - radius <= high.y && p.z + radius >= low.z && p.z - radius <= high.z;
-	}
 };
 
 class Geometry
@@ -478,10 +473,9 @@ public:
 		return a + f * (b - a);
 	}
 
-	static double distanceFromBox(glm::vec3 p, glm::vec3 boxPos, glm::vec3 b)
+	static glm::vec3 calculateNormal(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
 	{
-		glm::vec3 q = abs(p - boxPos) - b;
-		return glm::length(glm::max(q, glm::vec3(0.0))) + fmin(fmax(q.x, fmax(q.y, q.z)), 0.0);
+		return glm::normalize(glm::cross(p2 - p1, p3 - p1));
 	}
 
 };

@@ -5,19 +5,23 @@
 class Mesh
 {
 protected:
+
 	void bindIndexVBO(std::vector<GLuint> indexes);
 	void bindVertexAttribVBO(int attrib, int size, std::vector<GLfloat> data);
 
 	void bindVAO();
 	void unbindVAO();
 	void clearBuffers();
-	void recalculateBounds();
+	
 	std::vector<GLuint> bufferAttribs;
+	bool hasBound;
 public:
 	Mesh();
 	~Mesh();
 
 	void render();
+	void recalculateBounds();
+	void setUpVAO();
 
 	std::vector<std::shared_ptr<Triangle>> toTriangles();
 	std::vector<std::shared_ptr<Triangle>> toTriangles(glm::mat4 transform);
@@ -55,11 +59,11 @@ public:
 	static std::shared_ptr<ColorMesh> triangle();
 	static std::shared_ptr<ColorMesh> loadFromFile(std::string fileName);
 	static std::shared_ptr<ColorMesh> recolorNonGray(std::shared_ptr<ColorMesh> mesh);
-	static std::shared_ptr<ColorMesh> meshFromTriangles(std::vector<std::shared_ptr<Triangle>> faces, int r, int g, int b);
-	static std::shared_ptr<ColorMesh> meshFromTrianglesUnbound(std::vector<std::shared_ptr<Triangle>> faces, int r, int g, int b);
-	static std::shared_ptr<ColorMesh> meshFromVertexGrid(std::vector<std::vector<std::vector<bool>>> grid, Bounds bounds, int r, int g, int b);
-	static std::shared_ptr<ColorMesh> meshFromVertexGrid(std::vector<std::vector<double>> grid, Bounds bounds, int r, int g, int b);
-	static std::shared_ptr<ColorMesh> applyMatrixToMesh(std::shared_ptr<ColorMesh> mesh, glm::mat4 matrix);
+	static std::shared_ptr<ColorMesh> meshFromTriangles(std::vector<std::shared_ptr<Triangle>> & faces, int r, int g, int b);
+	static std::shared_ptr<ColorMesh> meshFromTrianglesUnbound(std::vector<std::shared_ptr<Triangle>> & faces, int r, int g, int b);
+	static std::shared_ptr<ColorMesh> meshFromVertexGrid(std::vector<std::vector<std::vector<bool>>> & grid, Bounds & bounds, int r, int g, int b);
+	static std::shared_ptr<ColorMesh> meshFromVertexGrid(std::vector<std::vector<double>> & grid, Bounds & bounds, int r, int g, int b);
+	static std::shared_ptr<ColorMesh> applyMatrixToMesh(std::shared_ptr<ColorMesh> & mesh, glm::mat4 matrix);
 };
 
 class TextureMesh : public Mesh

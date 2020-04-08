@@ -69,6 +69,7 @@ void UIManager::setUpWindowQuad(std::string postProcessing)
 	useShadowLoc = windowShader->getUniformLocation("useShadow");
 	ambientLoc = windowShader->getUniformLocation("ambient");
 	VSMatLoc = windowShader->getUniformLocation("VSMat");
+	invVSMatLoc = windowShader->getUniformLocation("invVSMat");
 	windowScaleLoc = windowShader->getUniformLocation("windowScale");
 	windowShader->useShader();
 	glUniform2f(windowScaleLoc, (float) 1.0 / width, (float) 1.0 / height);
@@ -205,7 +206,7 @@ bool UIManager::create(int width, int height, std::string title, int fps, unsign
 	//fprintf(stdout, "stuff %i", window);
 
 	if (window == NULL) {
-		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
+		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible.\n");
 		glfwTerminate();
 		return false;
 	}
@@ -253,6 +254,8 @@ bool UIManager::create(int width, int height, std::string title, int fps, unsign
 
 	glViewport(0, 0, width, height);
 
+	std::cout << glGetString(GL_VERSION) << "\n";
+
 	return true;
 }
 
@@ -299,11 +302,13 @@ void UIManager::updateWindowShaderUniforms()
 void UIManager::glSetUp()
 {
 	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 	glDepthMask(GL_TRUE);
 	glClearDepth(1.f);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+	//glEnable(GL_NORMALIZE);
 	//	glLoadIdentity();
 		//glEnable(GL_TEXTURE_2D);
 		//glEnable(GL_STENCIL);
@@ -429,6 +434,7 @@ void UIManager::renderWindow()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glViewport(0, 0, width, height);
 	//render the window quads and push the texture
+	windowShader->loadVector(clearColorLoc, glm::vec3(this->r, this->g, this->b));
 	windowShader->useShader();
 	windowShader->loadVector(gLDirLoc, Light::globalLightDirection);
 	windowShader->loadFloat(gLIntenLoc, Light::globalLightIntensity);
@@ -438,7 +444,6 @@ void UIManager::renderWindow()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
-
 	//windowShader->load
 }
 
@@ -476,8 +481,6 @@ void UIManager::renderSSAO(Camera & camera)
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
-
-
 }
 
 void UIManager::setHDR(float gamma, float exposure)
@@ -617,7 +620,7 @@ void UIManager::display(Camera& camera, std::shared_ptr<GameObject> renderObject
 		numShadows = setShadowMap(camera, lights_);
 		glUniform1i(numShadowSSLoc, numShadows);
 		glCullFace(GL_FRONT);
-		stage->renderShadow(lights_, windowShader, shadowMatrixLoc);
+		stage->renderShadow(lights_, windowShader, shadowMatrixLoc, glm::mat4(1.0));
 		glCullFace(GL_BACK);
 	}
 
@@ -626,7 +629,7 @@ void UIManager::display(Camera& camera, std::shared_ptr<GameObject> renderObject
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//set up shadows
-	renderObject->render(camera);
+	renderObject->render(camera, glm::mat4(1.0));
 
 	//glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -642,6 +645,7 @@ void UIManager::display(Camera& camera, std::shared_ptr<GameObject> renderObject
 		glUniform1i(numShadowLoc, numShadows);
 
 	windowShader->loadMatrix(VSMatLoc, camera.getTransform());
+	windowShader->loadMatrix(invVSMatLoc, glm::inverse(camera.getTransform()));
 
 	renderWindow();
 

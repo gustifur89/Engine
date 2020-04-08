@@ -3,10 +3,6 @@
 
 // ============================ Portal ===============================
 
-GLuint Portal::radiusLoc = 0;
-GLuint Portal::portalUVLoc = 0;
-GLuint Portal::factorLoc = 0;
-
 Portal::Portal()
 {
 	allPortals.push_back(this);
@@ -27,9 +23,6 @@ Portal::Portal(int width, int height)
 	//	glBindFramebuffer(GL_FRAMEBUFFER, renderTexture.frameBuffer);
 
 	//	glSetUp();
-
-
-
 }
 
 std::vector<Portal*>Portal::allPortals = std::vector<Portal*>();
@@ -50,14 +43,11 @@ void Portal::setWorld(std::shared_ptr<GameObject> world)
 	this->world = world;
 }
 
-void Portal::renderFunc(Camera& camera)
+void Portal::renderFunc(Camera& camera, glm::mat4 parentTransform)
 {
 	if (updated)
 	{
-		float distance = glm::length(camera.position - this->transform.position);
-		float projRadius = radius * (camera.minZ / distance);
-
-		glm::mat4 MVPmatrix = camera.getProjection() * camera.getTransform() * transform.getTransform();
+		glm::mat4 MVPmatrix = camera.getProjection() * camera.getTransform() * parentTransform * transform.getTransform();
 
 		glm::mat4 scale = glm::scale(glm::vec3(1.0 / radius));
 
@@ -71,20 +61,11 @@ void Portal::renderFunc(Camera& camera)
 
 		glm::mat4 NMmatrix = camera.getProjection();// *glm::mat4(rotation);// camera.getTransform();// *transform.getTransform();// *rotation;// *transform.getTransform() * scale;// transform.getScale();// camera.getRotation() * camera.getScale() * transform.getRotation() * transform.getScale();// camera.getTransform() * scale;
 		
-
-		glm::vec4 tempUV = MVPmatrix * glm::vec4(this->transform.position, 1);
-		glm::vec2 portalUV = 0.5f * (glm::vec2(tempUV.x/ tempUV.w, tempUV.y / tempUV.w) + glm::vec2(1, 1));
-
-		std::cout << portalUV.x << " : " << portalUV.y << "\n";
-
 		glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
 		glBindTextureUnit(3, renderTexture.colTex);
 		glBindTextureUnit(4, renderTexture.posTex);
 		glBindTextureUnit(5, renderTexture.normTex);
 		shader->useShader();
-		shader->loadFloat(Portal::radiusLoc, projRadius);
-		shader->loadFloat(Portal::factorLoc, 0.5);
-		shader->loadVector(Portal::portalUVLoc, portalUV);
 		shader->setLightInternal(shader->light);
 		shader->setMatrixes(MVPmatrix, NMmatrix, colorMatrix);
 		mesh->render();
@@ -116,7 +97,7 @@ void Portal::portalRender(Camera camera, int width, int height)
 	//get distance from the viewer to the plane of the portal, perpedicular to the direction... so closest point.
 
 	glm::vec3 portalVertex = this->transform.position;
-	float minZ = distanceToPlane(camera.position, Transform::getTransformedZ(camera.rotationMatrix), portalVertex);// fmax((getMinZ(camera) - radius), 0.1f);
+	float minZ = distanceToPlane(camera.position, camera.getTransformedZ(), portalVertex);// fmax((getMinZ(camera) - radius), 0.1f);
 //	float minZA = fmax((getMinZ(camera) - radius), 0.1f);
 
 	minZ = fmax(0.0, minZ - 0.5);
@@ -128,7 +109,7 @@ void Portal::portalRender(Camera camera, int width, int height)
 
 	portalCamera.position = otherPortal->transform.position + (camera.position - this->transform.position);
 
-	portalCamera.rotationMatrix = camera.rotationMatrix;
+	portalCamera.setRotation(camera);
 
 	//glBindTexture(GL_TEXTURE_2D, renderTexture.frameBuffer);
 //	glBindTextureUnit(0, renderTexture.colTex);
@@ -139,7 +120,7 @@ void Portal::portalRender(Camera camera, int width, int height)
 	glViewport(0, 0, width, height);
 //	glViewport(0, 0, 900, 650);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	world->render(portalCamera);
+	world->render(portalCamera, glm::mat4(1.0));
 	updated = true;
 }
 
@@ -171,10 +152,6 @@ void Portal::setUpShader(std::shared_ptr<ColorShader> shader)
 	glUniform1i(colTexLoc, 3);
 	glUniform1i(posTexLoc, 4);
 	glUniform1i(normTexLoc, 5);
-
-	Portal::radiusLoc = shader->getUniformLocation("radius");
-	Portal::portalUVLoc = shader->getUniformLocation("portalUV");
-	Portal::factorLoc = shader->getUniformLocation("factor");
 }
 
 void Portal::collideInternal(std::shared_ptr<Entity> entity)

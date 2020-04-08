@@ -33,37 +33,39 @@ glm::mat4 Camera::getProjection()
 glm::mat4 Camera::getTransform()
 {
 	glm::vec4 lookDirection(0, 0, 1, 0);	//Looking direction in viewSpace
-	glm::vec4 leftDirection(1, 0, 0, 0);
+	glm::vec4 upDirection(0, 1, 0, 0);
 	//rotate by the direction
 	glm::mat4 rotationMatrix = this->getRotation();// glm::toMat4(glm::quat((float)TO_RAD * rotation));
 	//roate the look direction by the rotation
 	lookDirection = rotationMatrix * lookDirection;
-	leftDirection = rotationMatrix * leftDirection;
-
-	glm::vec3 upDir = glm::normalize(glm::cross(glm::vec3(lookDirection), glm::vec3(leftDirection)));
-
+	upDirection = rotationMatrix * upDirection;
 	glm::vec3 lookAt = position + glm::vec3(lookDirection);
-	
-	//Does what I want
+
+	//return glm::inverse(glm::toMat4(glm::quat(glm::radians(glm::vec3(rotation.x, rotation.y, 0))))) * glm::inverse(this->getTranslate()) * glm::inverse(this->getScale());
+
+	//glm::mat4 rotationProper = glm::mat4(glm::angleAxis((float) TO_RAD * rotation.x, glm::vec3(1, 0, 0)) * glm::angleAxis((float)TO_RAD * rotation.y, glm::vec3(0, 1, 0)) * glm::angleAxis((float)TO_RAD * rotation.z, glm::vec3(0, 0, 1)));
+	//glm::mat4 rotationProper = glm::mat4(glm::angleAxis((float)TO_RAD * rotation.z, glm::vec3(0, 0, 1)));
+	//glm::angleAxis((float)TO_RAD * rotation.z, glm::vec3(0, 0, 1))
+
+
+	//return glm::inverse(glm::toMat4(glm::quat(glm::radians(rotation)))) * glm::inverse(this->getTranslate()) * glm::inverse(this->getScale());
+	//return glm::inverse(rotationProper) * glm::inverse(this->getTranslate()) * glm::inverse(this->getScale());
+
+	//return this->getRotation();
+
+	//glm::translate(glm::mat4(1.0), position);
+	////glm::rotation(glm::mat4(1.0), rotation, );
+	//glm::translate(position);
+
+//	return glm::inverse(Transform::getTransform());
+
+//	return glm::inverse(translation * rotationMatrix * scaleMatrix);
+
 	return glm::lookAt(
 		position,	// the position of your camera, in world space
 		lookAt,		// where you want to look at, in world space
-		upDir    // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
-	);
-
-	/*
-	return glm::lookAt(
-		position,	// the position of your camera, in world space
-		lookAt,		// where you want to look at, in world space
-		glm::vec3(0,1,0)    // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
-	);
-	*/
-
-
-
-//	return this->getTranslate() * this->getRotation() * this->getScale();
-//	return this->getRotation();
-
+		upDirection.xyz()// glm::vec3(0, 1, 0)    // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
+	 );
 }
 
 bool Camera::isSphereInView(glm::vec3 position, double radius, glm::mat4 modelMatrix)

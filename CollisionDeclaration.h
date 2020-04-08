@@ -3,7 +3,3 @@ class PhysicsBody;
 class Collider;
 struct Collision;
 class CollisionStructure;
-class CollisionHandler;
-class ColliderGrid;
-class OctTree;
-class infiniteColliderGrid;

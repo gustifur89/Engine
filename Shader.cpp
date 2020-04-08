@@ -366,16 +366,6 @@ void Shader::loadVector(int location, glm::vec3 vector)
 	glUniform3f(location, vector.x, vector.y, vector.z);
 }
 
-void Shader::loadVector(int location, glm::vec2 vector)
-{
-	glUniform2f(location, vector.x, vector.y);
-}
-
-void Shader::loadVector(int location, glm::vec4 vector)
-{
-	glUniform4f(location, vector.x, vector.y, vector.z, vector.w);
-}
-
 void Shader::loadBoolean(int location, bool value)
 {
 	float toLoad = 0;
@@ -391,12 +381,6 @@ void Shader::loadMatrix(int location, glm::mat4 matrix)
 void Shader::loadMatrix(int location, glm::mat3 matrix)
 {
 	glUniformMatrix3fv(location, 1, GL_FALSE, &matrix[0][0]);
-}
-
-void Shader::loadArray(int location, std::vector<GLfloat> data)
-{
-	//glUniform1fv(location, data.size(), reinterpret_cast<GLfloat*>(data.data()));
-	glUniform1fv(location, data.size(), &data[0]);
 }
 
 void Shader::loadTexture(int location, int textureID)
@@ -429,11 +413,12 @@ std::shared_ptr<ColorShader> ColorShader::loadShader(std::string fileName)
 	std::shared_ptr<ColorShader> out(new ColorShader());
 	out->Shader::loadShader_(fileName, fileName);
 	out->mvp = out->getUniformLocation("MVP");
-	//out->mv = out->getUniformLocation("MV");
+	out->mv = out->getUniformLocation("MV");
 	out->cm = out->getUniformLocation("ColorMatrix");
+	out->useShader();
 	out->loadMatrix(out->cm, glm::mat4(1.0));
 	out->nm = out->getUniformLocation("NM");
-	out->light_loc = out->getUniformLocation("light");
+	//out->light_loc = out->getUniformLocation("light");
 	return out;
 }
 
@@ -448,10 +433,10 @@ void ColorShader::setLightInternal(glm::vec3 light)
 	loadVector(light_loc, light);
 }
 
-void ColorShader::setMatrixes(glm::mat4 MVP, glm::mat4 NM, glm::mat4 colorMatrix)
+void ColorShader::setMatrixes(glm::mat4 MVP, glm::mat4 MV, glm::mat4 NM, glm::mat4 colorMatrix)
 {
 	loadMatrix(mvp, MVP);
-//	loadMatrix(mv, MV);
+	loadMatrix(mv, MV);
 	loadMatrix(cm, colorMatrix);
 	loadMatrix(nm, NM);
 }
@@ -479,6 +464,7 @@ std::shared_ptr<TextureShader> TextureShader::loadShader(std::string fileName)
 	out->Shader::loadShader_(fileName, fileName);
 	out->mvp = out->getUniformLocation("MVP");
 	out->nm = out->getUniformLocation("NM");
+	out->mv = out->getUniformLocation("MV");
 	out->texLoc = out->getUniformLocation("tex");
 	out->light_loc = out->getUniformLocation("light");
 	return out;
@@ -500,9 +486,10 @@ void TextureShader::setLightInternal(glm::vec3 light)
 	loadVector(light_loc, light);
 }
 
-void TextureShader::setMatrixes(glm::mat4 MVP, glm::mat4 NM)
+void TextureShader::setMatrixes(glm::mat4 MVP, glm::mat4 MV, glm::mat4 NM)
 {
 	loadMatrix(mvp, MVP);
+	loadMatrix(mv, MV);
 	loadMatrix(nm, NM);
 }
 

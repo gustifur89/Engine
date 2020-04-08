@@ -12,11 +12,19 @@
 #include "Toggle.h"
 #include "PhysicsBody.h"
 
-int main()
+#define EXE
+
+#ifdef EXE
+#define main() mainNonLib()
+#endif
+
+
+
+int mainNonLib()
 {
 	UIManager UI;
 	//UI_SSAO
-	if (!UI.create(900, 650, "nihilnauts", 120, UI_SOBEL | UI_SSAO, "windowFragment2"))
+	if (!UI.create(900, 650, "nihilnauts", 120, UI_SOBEL | UI_SSAO | UI_SHADOW, "windowFragment2"))
 	{
 		std::cout << "failed to create UI\n";
 		return -1;
@@ -47,10 +55,9 @@ int main()
 	std::shared_ptr<ColorMesh> landMesh = ColorMesh::loadFromFile("land");
 	std::shared_ptr<ColorMesh> placeMesh = ColorMesh::loadFromFile("central_pillar");//central_pillar area_model area
 	std::shared_ptr<ColorMesh> crystalMesh = ColorMesh::loadFromFile("crystal");//crystal
-	std::shared_ptr<ColorMesh> pillarMesh = ColorMesh::loadFromFile("pillar");
+	std::shared_ptr<ColorMesh> pillarMesh = ColorMesh::loadFromFile("x-wing");//pillar
 	std::shared_ptr<ColorMesh> portalGunMesh = ColorMesh::loadFromFile("portalGun");
 	std::shared_ptr<ColorMesh> portalMesh = ColorMesh::loadFromFile("portalMesh2");//portalMesh3  planar_portal  portalMesh2
-	std::shared_ptr<ColorMesh> xwingMesh = ColorMesh::loadFromFile("x-wing");
 	
 	std::vector<std::shared_ptr<Portal>> portals;
 
@@ -63,11 +70,11 @@ int main()
 	//soundEmmiter0->play();
 
 
-//	/*
+	/*
 	std::shared_ptr<Portal> portal2(new Portal(UI.width, UI.height));
 	portal2->mesh = portalMesh;
 	portal2->shader = portalShader;
-	portal2->transform.position = glm::vec3(-26, 6, 0);
+	portal2->transform.position = glm::vec3(-26, 1.5, 0);
 	portal2->setFillColor(189, 255, 142);
 	portal2->setRadius(2.0);
 	portal2->setWorld(world1);
@@ -84,7 +91,6 @@ int main()
 	stage->addChild(portal1);
 	portals.push_back(portal1);
 
-	/*
 	std::shared_ptr<Portal> portal3(new Portal(UI.width, UI.height));
 	portal3->mesh = portalMesh;
 	portal3->shader = portalShader;
@@ -102,19 +108,10 @@ int main()
 	portal4->setWorld(world1);
 	stage->addChild(portal4);
 	portals.push_back(portal4);
-	*/
 
 	Portal::linkPortals(portal1, portal2);
-//	Portal::linkPortals(portal3, portal4);
-
-
-	std::shared_ptr<GameObjectColor> xwing(new GameObjectColor);
-	xwing->transform.position = glm::vec3(5, 8, 1);
-	xwing->mesh = xwingMesh;
-	xwing->shader = colorShader;
-	world1->addChild(xwing);
-
-
+	Portal::linkPortals(portal3, portal4);
+	
 	//*/
 	/*
 	std::shared_ptr<GameObjectColor> ground(new GameObjectColor);
@@ -139,7 +136,7 @@ int main()
 	{
 		std::shared_ptr<GameObjectColor> obj(new GameObjectColor);
 		obj->transform.position = glm::vec3(rand() % 120 - 60, rand() % 60 - 30, rand() % 120 - 60);
-		obj->transform.setRotation(glm::vec3(0, (rand() % 360), 0));// rotation.y = (rand() % 360);
+		obj->transform.setRotation(0, (rand() % 360), 0);
 		double scale = ((rand() % 1000) / 1000.0) * 1.0 + 0.6;
 		obj->transform.scale.y = ((rand() % 1000) / 1000.0) * 1.0 + 1.0;
 
@@ -175,15 +172,13 @@ int main()
 	entities.push_back(player);
 	land->setTarget(player);
 	player->testName = 13;
-	player->colliders[0]->colliderType = 2;
 	Physics::addPhysicsBody(player);
-
+	player->looking = Player::FLY;
 	//HUD
 	
 	std::shared_ptr<Gun> gun(new Gun(0.05, portalGunMesh, &UI));
 	gun->relative.position = glm::vec3(0, 0.5, -0.5);
-	gun->relative.setRotation(glm::vec3(-1, 0, 0));// = 0;
-//	gun->relative.rotation.x = -10;
+	gun->relative.setRotation(-10, 0, 0);
 	double gunScale = 0.1;
 	//gun->transform.scale = glm::vec3(gunScale);
 	//gun->transform.position = glm::vec3(0, 0, 0);
@@ -198,10 +193,10 @@ int main()
 	//LIGHTING
 
 	std::shared_ptr<Light> light0 = Light::createPointLight(glm::vec3(0, 20, 0), 60.0, 50.0, glm::vec3(255, 255, 255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
-	//UI.addLight(light0);
+	UI.addLight(light0);
 
 	std::shared_ptr<Light> light1 = Light::createPointLight(glm::vec3(0, 40, 0), 120, 10.0, glm::vec3(255, 255, 255));//Light::createSpotLight(glm::vec3(0,15,0), glm::vec3(0, 0, 0), 30.0, 20.0);
-	//UI.addLight(light1);
+	UI.addLight(light1);
 
 	glm::vec4 lightAxis(0, 1, 0, 0);
 
@@ -242,14 +237,14 @@ int main()
 	basic0->setFillColor(200, 200, 80);
 	basic0->transform.scale = glm::vec3(4, 1, 4);
 	basic0->transform.position = glm::vec3(0, -2, 0);
-	world1->addChild(basic0);
+	world2->addChild(basic0);
 	
 	std::shared_ptr<OctTree> tree(new OctTree());
 	tree->build(world2, 6, 2);
 	Physics::addCollisionStructure(tree);
 	Physics::addCollisionStructure(land);
 
-	//Physics::gravity = glm::vec3(0, -10, 0);
+	Physics::gravity = glm::vec3(0, -10, 0);
 
 	do
 	{
@@ -263,11 +258,9 @@ int main()
 			ball->setPosition(player->getPosition());
 			ball->friction = 2.0;
 			ball->addCollider(glm::vec3(0, 0, 0), 1.0);
-			ball->applyImpulse(player->velocity, glm::vec3(0));
-			ball->mass = 1.0;
-			//ball->colliders[0]->colliderType = 2;
 			Physics::addPhysicsBody(ball);
 		}
+
 
 
 		player->move();
@@ -310,7 +303,7 @@ int main()
 				proj->setPosition(glm::vec3(0,3,0));
 				Physics::addPhysicsBody(proj);
 				*/
-				glm::vec3 direction = Transform::getTransformedZ(player->lookRotation.rotationMatrix);// +glm::vec3(Gen::random() * 60, Gen::random() * 60, Gen::random() * 60));
+				glm::vec3 direction = Transform::getTransformedZ(player->lookRotation);// +glm::vec3(Gen::random() * 60, Gen::random() * 60, Gen::random() * 60));
 
 				std::shared_ptr<Entity> ball(new Entity(0.0, ballMesh, &UI));
 				ball->mesh = ballMesh;
@@ -321,10 +314,8 @@ int main()
 				ball->setScale(glm::vec3(radius));
 				ball->friction = 2.0;
 				ball->addCollider(glm::vec3(0, 0, 0), radius);
-				//ball->colliders[0]->colliderType = 1;
+				ball->colliders[0]->colliderType = 1;
 				ball->elasticity = 1.0;
-				ball->mass = 0.2;
-				ball->applyImpulse(player->velocity, glm::vec3(0));
 				Physics::addPhysicsBody(ball);
 				ball->applyImpulse(ballSpeed * direction, glm::vec3(0, 0, 0));
 			}
@@ -341,7 +332,7 @@ int main()
 		portal1->transform.rotation.y += 60 * UI.deltaTime;
 		*/
 
-		Audio::configureListener(player->getPosition(), glm::vec3(0, 0, 0));// player->lookRotation.rotationMatrix);
+		Audio::configureListener(player->getPosition(), player->lookRotation);
 
 		if (updateToggle)
 			land->update();
@@ -374,6 +365,8 @@ int main()
 		Portal::collide(portals, entities);
 		Portal::preRenderPortals(portals, camera, UI.width, UI.height);
 		//Entity::entityBounds(entities);
+
+		
 
 		UI.display(camera, stage);
 	} while (UI.isWindowOpen());

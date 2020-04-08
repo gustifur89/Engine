@@ -68,14 +68,14 @@ std::shared_ptr<Chunk> Terrain::generateChunk(glm::vec2 pos, std::pair<double, d
 				double x_ = ((double)x) / xVerts;
 				double z_ = ((double)z) / zVerts;
 
-				grid[x][z] = ground((lowX + x_) / meshScale, (lowZ + z_) / meshScale);
-			//	if (lowX > 0.0) grid[x][z] = 2.0;
+				grid[x][z] = meshScale * ground((lowX + x_) / meshScale, (lowZ + z_) / meshScale);
+
 			}
 		}
 	
 		Bounds bounds(glm::vec3(0, 0, 0), glm::vec3(scale.x * chunkSize.x, scale.y * chunkSize.y, scale.z * chunkSize.z));
 		chunk->mesh = ColorMesh::meshFromVertexGrid(grid, bounds, 0, 0, 255);
-		chunk->octTree->build(chunk, 4, 4);
+		chunk->octTree->build(chunk, 4, 2);
 	}
 	else
 	{
@@ -204,7 +204,7 @@ std::shared_ptr<Chunk> Terrain::generateChunk(glm::vec2 pos, std::pair<double, d
 
 		Bounds bounds(glm::vec3(0, 0, 0), glm::vec3(scale.x * chunkSize.x, scale.y * chunkSize.y, scale.z * chunkSize.z));
 		chunk->mesh = ColorMesh::meshFromVertexGrid(grid, bounds, 0, 0, 255);
-		chunk->octTree->build(chunk, 4, 4);
+		chunk->octTree->build(chunk, 4, 2);
 	}
 
 	//chunk->setFillColor(rand() % 255, rand() % 255, rand() % 255);
@@ -233,11 +233,11 @@ void Terrain::update()
 	chunkManagement();
 }
 
-void Terrain::renderFunc(Camera & camera)
+void Terrain::renderFunc(Camera & camera, glm::mat4 parentTransform)
 {
 	for (const auto &p : chunkMap)
 	{
-		p.second->render(camera);
+		p.second->renderFunc(camera, parentTransform);
 	}
 
 //	this->GameObjectColor::renderFunc(camera);
